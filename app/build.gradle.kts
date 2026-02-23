@@ -6,6 +6,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.lineageos.generatebp)
 }
 
 android {
@@ -56,4 +57,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+generateBp {
+    targetSdk = android.defaultConfig.targetSdk!!
+    minSdk = android.defaultConfig.minSdk!!
+    availableInAOSP = { module ->
+        when {
+            module.group.startsWith("androidx") -> true
+            module.group.startsWith("org.jetbrains") -> true
+            module.group == "com.google.android.material" -> true
+            module.group == "com.google.guava" -> true
+            else -> false
+        }
+    }
 }
