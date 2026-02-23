@@ -5,4 +5,12 @@
 -->
 <resources>
     <string name="app_name">Canvas</string>
+    <string name="save">Save</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
+    <string name="share">Share</string>
+    <string name="resize">Resize</string>
+    <string name="text">Text</string>
+    <string name="marker">Marker</string>
+    <string name="eraser">Eraser</string>
 </resources>

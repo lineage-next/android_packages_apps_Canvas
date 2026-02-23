@@ -5,48 +5,65 @@
 
 package org.lineageos.canvas
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.activity.viewModels
+import org.lineageos.canvas.ui.CanvasApp
 import org.lineageos.canvas.ui.theme.CanvasTheme
+import org.lineageos.canvas.viewmodel.UriViewModel
 
 class MainActivity : ComponentActivity() {
+    private val uriViewModel: UriViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        handleIntent(intent)
+
         enableEdgeToEdge()
         setContent {
             CanvasTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                CanvasApp(
+                    uriViewModel = uriViewModel,
+                    onSave = {
+                        val result = Intent().apply {
+                            data = it
+                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        }
+                        setResult(RESULT_OK, result)
+                        finish()
+                    },
+                    onShare = {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "image/*"
+                            putExtra(Intent.EXTRA_STREAM, it)
+                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        }
+                        startActivity(Intent.createChooser(intent, null))
+                    },
+                )
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CanvasTheme {
-        Greeting("Android")
+    private fun handleIntent(intent: Intent?) {
+        val uri = intent?.takeIf { it.action == Intent.ACTION_EDIT }?.data
+        if (uri == null) {
+            finish()
+            return
+        }
+
+        val isWritable = (intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0
+
+        uriViewModel.setUri(uri, isWritable)
     }
 }
