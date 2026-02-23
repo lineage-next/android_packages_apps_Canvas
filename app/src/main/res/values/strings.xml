@@ -13,4 +13,6 @@
     <string name="text">Text</string>
     <string name="marker">Marker</string>
     <string name="eraser">Eraser</string>
+
+    <string name="enter_text">Enter text…</string>
 </resources>

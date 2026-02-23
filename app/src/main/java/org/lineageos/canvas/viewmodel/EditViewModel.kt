@@ -5,7 +5,11 @@
 
 package org.lineageos.canvas.viewmodel
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.PointF
 import android.graphics.RectF
+import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +46,15 @@ class EditViewModel : ViewModel() {
     private val _mode = MutableStateFlow(Mode.RESIZE)
     val mode: StateFlow<Mode> = _mode.asStateFlow()
 
+    private val _showTextEditor = MutableStateFlow(false)
+    val showTextEditor: StateFlow<Boolean> = _showTextEditor.asStateFlow()
+
+    private val _textEditorPosition = MutableStateFlow<PointF?>(null)
+    val textEditorPosition: StateFlow<PointF?> = _textEditorPosition.asStateFlow()
+
+    private val _textEditorText = MutableStateFlow("")
+    val textEditorText: StateFlow<String> = _textEditorText.asStateFlow()
+
     val cropRect: StateFlow<RectF?> = combine(
         _actions,
         _pendingAction,
@@ -53,6 +66,30 @@ class EditViewModel : ViewModel() {
             val lastResize = actions.lastOrNull { it is Action.Resize } as? Action.Resize
             lastResize?.rect ?: baseRect
         }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000L),
+        null,
+    )
+
+    val actionsBitmap: StateFlow<Bitmap?> = combine(
+        _actions,
+        _baseRect,
+    ) { actions, baseRect ->
+        if (baseRect == null) return@combine null
+
+        val bitmap = createBitmap(
+            baseRect.width().toInt(),
+            baseRect.height().toInt(),
+            Bitmap.Config.ARGB_8888,
+        )
+
+        val canvas = Canvas(bitmap)
+        actions.forEach { action ->
+            action.drawInto(canvas)
+        }
+
+        bitmap
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000L),
@@ -92,5 +129,21 @@ class EditViewModel : ViewModel() {
         val lastUndoAction = _undoActions.value.lastOrNull() ?: return
         _undoActions.value = _undoActions.value.dropLast(1)
         _actions.value += lastUndoAction
+    }
+
+    fun showTextEditor(position: PointF) {
+        _textEditorPosition.value = position
+        _textEditorText.value = ""
+        _showTextEditor.value = true
+    }
+
+    fun dismissTextEditor() {
+        _showTextEditor.value = false
+        _textEditorPosition.value = null
+        _textEditorText.value = ""
+    }
+
+    fun updateTextEditorText(text: String) {
+        _textEditorText.value = text
     }
 }

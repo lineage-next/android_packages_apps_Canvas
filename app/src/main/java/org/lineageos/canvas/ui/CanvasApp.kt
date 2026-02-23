@@ -5,18 +5,25 @@
 
 package org.lineageos.canvas.ui
 
+import android.graphics.Bitmap
+import android.graphics.PointF
 import android.graphics.RectF
 import android.net.Uri
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +31,8 @@ import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoFixNormal
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Title
@@ -35,6 +44,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,9 +56,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -55,7 +70,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
@@ -87,7 +105,14 @@ fun CanvasApp(
     val mode by editViewModel.mode.collectAsState()
     val cropRect by editViewModel.cropRect.collectAsState()
 
+    val actionsBitmap by editViewModel.actionsBitmap.collectAsState()
+
+    val showTextEditor by editViewModel.showTextEditor.collectAsState()
+    val textEditorPosition by editViewModel.textEditorPosition.collectAsState()
+    val textEditorText by editViewModel.textEditorText.collectAsState()
+
     val currentUri = uri ?: return
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -103,41 +128,160 @@ fun CanvasApp(
             )
         },
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .navigationBarsPadding()
         ) {
-            ImageContainer(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ImageContainer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    uri = currentUri,
+                    mode = mode,
+                    cropRect = cropRect,
+                    actionsBitmap = actionsBitmap,
+                    onBaseRectChange = {
+                        editViewModel.setBaseRect(it)
+                    },
+                    onCropRectChange = {
+                        editViewModel.setPendingAction(
+                            Action.Resize(it)
+                        )
+                    },
+                    onCropRectCommit = {
+                        editViewModel.commitPendingAction()
+                    },
+                    onImageClick = {
+                        if (mode == Mode.TEXT) {
+                            editViewModel.showTextEditor(it)
+                        }
+                    },
+                )
+
+                BottomToolbar(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 8.dp),
+                    currentMode = mode,
+                    onResize = { editViewModel.setMode(Mode.RESIZE) },
+                    onText = {
+                        editViewModel.setMode(Mode.TEXT)
+                    },
+                    onMarker = { editViewModel.setMode(Mode.MARKER) },
+                    onEraser = { editViewModel.setMode(Mode.ERASER) },
+                )
+            }
+
+            if (showTextEditor) {
+                TextEditorOverlay(
+                    text = textEditorText,
+                    onTextChange = { editViewModel.updateTextEditorText(it) },
+                    onDismiss = {
+                        editViewModel.dismissTextEditor()
+                    },
+                    onConfirm = { text ->
+                        val pos = textEditorPosition
+                        if (pos != null) {
+                            editViewModel.addAction(
+                                org.lineageos.canvas.model.TextStyle.BLACK.toTextAction(
+                                    text = text, position = pos
+                                )
+                            )
+                        }
+                        editViewModel.dismissTextEditor()
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TextEditorOverlay(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color.Black.copy(alpha = 0.8f),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(Color.Black, RoundedCornerShape(4.dp))
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text("TEST", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+
+                IconButton(
+                    onClick = { if (text.isNotBlank()) onConfirm(text) },
+                    enabled = text.isNotBlank()
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = if (text.isNotBlank()) Color.White else Color.Gray
+                    )
+                }
+            }
+
+            TextField(
+                value = text,
+                onValueChange = onTextChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                uri = currentUri,
-                mode = mode,
-                cropRect = cropRect,
-                onBaseRectChange = {
-                    editViewModel.setBaseRect(it)
-                },
-                onCropRectChange = {
-                    editViewModel.setPendingAction(
-                        Action.Resize(it)
+                    .weight(1f)
+                    .focusRequester(focusRequester),
+                textStyle = TextStyle(
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                placeholder = {
+                    Text(
+                        text = stringResource(R.string.enter_text),
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 32.sp,
                     )
                 },
-                onCropRectCommit = {
-                    editViewModel.commitPendingAction()
-                },
-            )
-
-            BottomToolbar(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 8.dp),
-                currentMode = mode,
-                onResize = { editViewModel.setMode(Mode.RESIZE) },
-                onText = { editViewModel.setMode(Mode.TEXT) },
-                onMarker = { editViewModel.setMode(Mode.MARKER) },
-                onEraser = { editViewModel.setMode(Mode.ERASER) },
             )
         }
     }
@@ -280,9 +424,11 @@ fun ImageContainer(
     uri: Uri,
     mode: Mode?,
     cropRect: RectF?,
+    actionsBitmap: Bitmap?,
     onBaseRectChange: (RectF) -> Unit,
     onCropRectChange: (RectF) -> Unit,
     onCropRectCommit: () -> Unit,
+    onImageClick: (PointF) -> Unit = {},
 ) {
     var containerSize by remember { mutableStateOf(Size.Zero) }
     var imageSize by remember { mutableStateOf(Size.Zero) }
@@ -308,9 +454,23 @@ fun ImageContainer(
     }
 
     Box(
-        modifier = modifier.onGloballyPositioned {
-            containerSize = it.size.toSize()
-        },
+        modifier = modifier
+            .onGloballyPositioned {
+                containerSize = it.size.toSize()
+            }
+            .pointerInput(imageBounds) {
+                detectTapGestures { offset ->
+                    imageBounds?.let { bounds ->
+                        if (bounds.contains(offset.x, offset.y)) {
+                            onImageClick(
+                                PointF(
+                                    offset.x - bounds.left, offset.y - bounds.top
+                                )
+                            )
+                        }
+                    }
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
@@ -322,16 +482,29 @@ fun ImageContainer(
                 imageSize = it.painter.intrinsicSize
             })
 
-        if (imageBounds != null && cropRect != null) {
-            if (mode == Mode.RESIZE) {
-                ResizeOverlay(
-                    imageBounds = imageBounds,
-                    cropRect = cropRect,
-                    onCropRectChange = onCropRectChange,
-                    onCropRectCommit = onCropRectCommit,
+        if (imageBounds != null) {
+            actionsBitmap?.let {
+                Image(
+                    modifier = Modifier.size(
+                        width = with(LocalDensity.current) { it.width.toDp() },
+                        height = with(LocalDensity.current) { it.height.toDp() },
+                    ),
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = null,
                 )
-            } else if (cropRect != imageBounds) {
-                CropOverlay(cropRect = cropRect)
+            }
+
+            if (cropRect != null) {
+                if (mode == Mode.RESIZE) {
+                    ResizeOverlay(
+                        imageBounds = imageBounds,
+                        cropRect = cropRect,
+                        onCropRectChange = onCropRectChange,
+                        onCropRectCommit = onCropRectCommit,
+                    )
+                } else if (cropRect != imageBounds) {
+                    CropOverlay(cropRect = cropRect)
+                }
             }
         }
     }
