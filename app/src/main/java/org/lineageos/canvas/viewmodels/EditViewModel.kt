@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.lineageos.canvas.viewmodel
+package org.lineageos.canvas.viewmodels
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.lineageos.canvas.model.Action
-import org.lineageos.canvas.model.Mode
+import org.lineageos.canvas.models.Action
+import org.lineageos.canvas.models.Mode
 
 class EditViewModel : ViewModel() {
     private val _actions = MutableStateFlow<List<Action>>(listOf())

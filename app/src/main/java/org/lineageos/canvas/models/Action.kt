@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.lineageos.canvas.model
+package org.lineageos.canvas.models
 
 import android.graphics.Canvas
 import android.graphics.Paint

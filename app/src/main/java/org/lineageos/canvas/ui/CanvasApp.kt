@@ -79,13 +79,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import org.lineageos.canvas.R
 import org.lineageos.canvas.ext.drawCropOverlay
-import org.lineageos.canvas.model.Action
-import org.lineageos.canvas.model.Handle
-import org.lineageos.canvas.model.Mode
+import org.lineageos.canvas.models.Action
+import org.lineageos.canvas.models.Handle
+import org.lineageos.canvas.models.Mode
 import org.lineageos.canvas.ui.theme.CropOverlayStyle
 import org.lineageos.canvas.ui.theme.defaultCropOverlayStyle
-import org.lineageos.canvas.viewmodel.EditViewModel
-import org.lineageos.canvas.viewmodel.UriViewModel
+import org.lineageos.canvas.viewmodels.EditViewModel
+import org.lineageos.canvas.viewmodels.UriViewModel
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -186,7 +186,7 @@ fun CanvasApp(
                         val pos = textEditorPosition
                         if (pos != null) {
                             editViewModel.addAction(
-                                org.lineageos.canvas.model.TextStyle.BLACK.toTextAction(
+                                org.lineageos.canvas.models.TextStyle.BLACK.toTextAction(
                                     text = text, position = pos
                                 )
                             )

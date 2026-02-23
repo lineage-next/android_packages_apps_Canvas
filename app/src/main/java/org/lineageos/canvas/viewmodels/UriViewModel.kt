@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.lineageos.canvas.viewmodel
+package org.lineageos.canvas.viewmodels
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel

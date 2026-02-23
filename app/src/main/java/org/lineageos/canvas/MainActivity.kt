@@ -13,7 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import org.lineageos.canvas.ui.CanvasApp
 import org.lineageos.canvas.ui.theme.CanvasTheme
-import org.lineageos.canvas.viewmodel.UriViewModel
+import org.lineageos.canvas.viewmodels.UriViewModel
 
 class MainActivity : ComponentActivity() {
     private val uriViewModel: UriViewModel by viewModels()
