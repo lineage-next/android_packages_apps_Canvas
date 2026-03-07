@@ -7,8 +7,10 @@ package org.lineageos.canvas.viewmodels
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.PointF
 import android.graphics.RectF
+import android.graphics.Typeface
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -153,5 +155,23 @@ class EditViewModel : ViewModel() {
 
     fun updateTextEditorText(text: String) {
         _textEditorText.value = text
+    }
+
+    private fun Action.drawInto(canvas: Canvas) {
+        when (this) {
+            is Action.Text -> {
+                requireNotNull(text)
+
+                val paint = Paint().apply {
+                    isAntiAlias = true
+                    color = color
+                    textSize = size
+                    typeface = Typeface.create(Typeface.DEFAULT, fontStyle)
+                }
+                canvas.drawText(text, position.x, position.y, paint)
+            }
+
+            else -> {}
+        }
     }
 }
