@@ -5,9 +5,27 @@
 
 package org.lineageos.canvas.models
 
+/**
+ * Edit mode.
+ */
 enum class Mode {
+    /**
+     * Image resize.
+     */
     RESIZE,
+
+    /**
+     * Add text overlay.
+     */
     TEXT,
+
+    /**
+     * Free drawing on the image.
+     */
     MARKER,
+
+    /**
+     * Erase [MARKER] drawings.
+     */
     ERASER,
 }

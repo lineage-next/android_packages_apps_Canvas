@@ -518,7 +518,7 @@ private fun ResizeOverlay(
     onCropRectCommit: () -> Unit,
     style: CropOverlayStyle = defaultCropOverlayStyle(),
 ) {
-    var activeHandle by remember { mutableStateOf(Handle.NONE) }
+    var activeHandle by remember { mutableStateOf<Handle?>(null) }
     val currentCropRect by rememberUpdatedState(cropRect)
 
     val handleThresholdPx = with(LocalDensity.current) { 24.dp.toPx() }
@@ -534,15 +534,16 @@ private fun ResizeOverlay(
                             getHandleForOffset(offset, currentCropRect, handleThresholdPx)
                     },
                     onDragEnd = {
-                        activeHandle = Handle.NONE
+                        activeHandle = null
                         onCropRectCommit()
                     },
                     onDragCancel = {
-                        activeHandle = Handle.NONE
+                        activeHandle = null
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        if (activeHandle == Handle.NONE) return@detectDragGestures
+
+                        val activeHandle = activeHandle ?: return@detectDragGestures
 
                         val newRect = RectF(currentCropRect)
                         updateRectWithDrag(newRect, activeHandle, dragAmount, imageBounds)
@@ -573,7 +574,7 @@ fun CropOverlay(
 private fun updateRectWithDrag(rect: RectF, handle: Handle, drag: Offset, bounds: RectF) {
     val minSize = 100f
     when (handle) {
-        Handle.MOVE -> {
+        Handle.CENTER -> {
             val width = rect.width()
             val height = rect.height()
 
@@ -613,12 +614,10 @@ private fun updateRectWithDrag(rect: RectF, handle: Handle, drag: Offset, bounds
             rect.bottom = (rect.bottom + drag.y).coerceIn(rect.top + minSize, bounds.bottom)
             rect.right = (rect.right + drag.x).coerceIn(rect.left + minSize, bounds.right)
         }
-
-        Handle.NONE -> {}
     }
 }
 
-private fun getHandleForOffset(offset: Offset, rect: RectF, threshold: Float): Handle {
+private fun getHandleForOffset(offset: Offset, rect: RectF, threshold: Float): Handle? {
     val x = offset.x
     val y = offset.y
 
@@ -641,8 +640,8 @@ private fun getHandleForOffset(offset: Offset, rect: RectF, threshold: Float): H
         isRight && y in (rect.top..rect.bottom) -> Handle.RIGHT
 
         // Rect check
-        rect.contains(x, y) -> Handle.MOVE
+        rect.contains(x, y) -> Handle.CENTER
 
-        else -> Handle.NONE
+        else -> null
     }
 }

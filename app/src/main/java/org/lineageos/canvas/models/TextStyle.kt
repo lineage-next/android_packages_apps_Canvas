@@ -9,6 +9,13 @@ import android.graphics.Color
 import android.graphics.PointF
 import android.graphics.Typeface
 
+/**
+ * Predefined text style.
+ *
+ * @param fontStyle The font style
+ * @param color The text color
+ * @param size The text size
+ */
 enum class TextStyle(
     val fontStyle: Int,
     val color: Int,
