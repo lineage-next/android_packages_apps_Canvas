@@ -32,10 +32,7 @@ import org.lineageos.canvas.models.Mode
 fun BottomToolbar(
     modifier: Modifier = Modifier,
     currentMode: Mode?,
-    onResize: () -> Unit,
-    onText: () -> Unit,
-    onMarker: () -> Unit,
-    onEraser: () -> Unit,
+    onModeSelected: (Mode) -> Unit,
 ) {
     Surface(
         modifier = modifier.padding(horizontal = 16.dp),
@@ -49,28 +46,32 @@ fun BottomToolbar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ToolButton(
-                onClick = onResize,
+                mode = Mode.RESIZE,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
                 icon = Icons.Default.AspectRatio,
                 label = stringResource(R.string.resize),
-                selected = currentMode == Mode.RESIZE
             )
             ToolButton(
-                onClick = onText,
+                mode = Mode.TEXT,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
                 icon = Icons.Default.Title,
                 label = stringResource(R.string.text),
-                selected = currentMode == Mode.TEXT
             )
             ToolButton(
-                onClick = onMarker,
+                mode = Mode.MARKER,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
                 icon = Icons.Default.Edit,
                 label = stringResource(R.string.marker),
-                selected = currentMode == Mode.MARKER
             )
             ToolButton(
-                onClick = onEraser,
+                mode = Mode.ERASER,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
                 icon = Icons.Default.AutoFixNormal,
                 label = stringResource(R.string.eraser),
-                selected = currentMode == Mode.ERASER
             )
         }
     }
@@ -78,19 +79,18 @@ fun BottomToolbar(
 
 @Composable
 private fun ToolButton(
-    onClick: () -> Unit,
+    mode: Mode,
+    currentMode: Mode?,
+    onModeSelected: (Mode) -> Unit,
     icon: ImageVector,
     label: String,
-    selected: Boolean,
 ) {
     IconButton(
-        onClick = onClick,
+        onClick = { onModeSelected(mode) },
+        enabled = currentMode != mode,
         colors = IconButtonDefaults.iconButtonColors(
-            contentColor = if (selected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.primary,
         ),
     ) {
         Icon(

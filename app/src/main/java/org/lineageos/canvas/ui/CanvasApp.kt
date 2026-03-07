@@ -107,12 +107,7 @@ fun CanvasApp(
                         .align(Alignment.CenterHorizontally)
                         .padding(vertical = 8.dp),
                     currentMode = mode,
-                    onResize = { editViewModel.setMode(Mode.RESIZE) },
-                    onText = {
-                        editViewModel.setMode(Mode.TEXT)
-                    },
-                    onMarker = { editViewModel.setMode(Mode.MARKER) },
-                    onEraser = { editViewModel.setMode(Mode.ERASER) },
+                    onModeSelected = editViewModel::setMode,
                 )
             }
 
