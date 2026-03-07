@@ -12,32 +12,45 @@ import android.graphics.RectF
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import org.lineageos.canvas.models.Action
+import org.lineageos.canvas.models.HistoryList
 import org.lineageos.canvas.models.Mode
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class EditViewModel : ViewModel() {
-    private val _actions = MutableStateFlow<List<Action>>(listOf())
+    private val historyList = HistoryList<Action>()
 
-    private val _undoActions = MutableStateFlow<List<Action>>(listOf())
+    private val actions = historyList.snapshot
+        .mapLatest { it.currentElements }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = emptyList(),
+        )
 
     private val _pendingAction = MutableStateFlow<Action?>(null)
 
     private val _baseRect = MutableStateFlow<RectF?>(null)
 
-    val canUndo: StateFlow<Boolean> = _actions.map { it.isNotEmpty() }.stateIn(
+    val canUndo: StateFlow<Boolean> = historyList.snapshot.map { it.canUndo }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000L),
         false,
     )
 
-    val canRedo: StateFlow<Boolean> = _undoActions.map { it.isNotEmpty() }.stateIn(
+    val canRedo: StateFlow<Boolean> = historyList.snapshot.map { it.canRedo }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000L),
         false,
@@ -56,7 +69,7 @@ class EditViewModel : ViewModel() {
     val textEditorText: StateFlow<String> = _textEditorText.asStateFlow()
 
     val cropRect: StateFlow<RectF?> = combine(
-        _actions,
+        actions,
         _pendingAction,
         _baseRect,
     ) { actions, pending, baseRect ->
@@ -73,7 +86,7 @@ class EditViewModel : ViewModel() {
     )
 
     val actionsBitmap: StateFlow<Bitmap?> = combine(
-        _actions,
+        actions,
         _baseRect,
     ) { actions, baseRect ->
         if (baseRect == null) return@combine null
@@ -105,8 +118,7 @@ class EditViewModel : ViewModel() {
     }
 
     fun addAction(action: Action) {
-        _undoActions.value = listOf()
-        _actions.value += action
+        historyList.insert(action)
     }
 
     fun setPendingAction(action: Action?) {
@@ -120,15 +132,11 @@ class EditViewModel : ViewModel() {
     }
 
     fun undo() {
-        val lastAction = _actions.value.lastOrNull() ?: return
-        _actions.value = _actions.value.dropLast(1)
-        _undoActions.value += lastAction
+        historyList.undo()
     }
 
     fun redo() {
-        val lastUndoAction = _undoActions.value.lastOrNull() ?: return
-        _undoActions.value = _undoActions.value.dropLast(1)
-        _actions.value += lastUndoAction
+        historyList.redo()
     }
 
     fun showTextEditor(position: PointF) {
