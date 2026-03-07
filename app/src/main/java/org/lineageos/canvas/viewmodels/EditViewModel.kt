@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.HistoryList
 import org.lineageos.canvas.models.Mode
+import org.lineageos.canvas.models.TextStyle
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditViewModel : ViewModel() {
@@ -162,10 +163,24 @@ class EditViewModel : ViewModel() {
             is Action.Text -> {
                 val paint = Paint().apply {
                     isAntiAlias = true
-                    color = color
-                    textSize = size
-                    typeface = Typeface.create(Typeface.DEFAULT, fontStyle)
+                    color = textStyle.textColor
+                    textSize = textStyle.textSize
+                    typeface = Typeface.create(
+                        when (textStyle.fontFamily) {
+                            TextStyle.FontFamily.DEFAULT -> null
+                            TextStyle.FontFamily.SANS_SERIF -> "sans-serif"
+                            TextStyle.FontFamily.SERIF -> "serif"
+                            TextStyle.FontFamily.MONOSPACE -> "monospace"
+                        },
+                        when (textStyle.fontStyle) {
+                            TextStyle.FontStyle.NORMAL -> Typeface.NORMAL
+                            TextStyle.FontStyle.BOLD -> Typeface.BOLD
+                            TextStyle.FontStyle.ITALIC -> Typeface.ITALIC
+                            TextStyle.FontStyle.BOLD_ITALIC -> Typeface.BOLD_ITALIC
+                        },
+                    )
                 }
+
                 canvas.drawText(text, position.x, position.y, paint)
             }
 

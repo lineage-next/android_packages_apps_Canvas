@@ -6,32 +6,48 @@
 package org.lineageos.canvas.models
 
 import android.graphics.Color
-import android.graphics.PointF
-import android.graphics.Typeface
+import androidx.annotation.ColorInt
 
 /**
- * Predefined text style.
+ * Text style.
  *
+ * @param fontFamily The font family
  * @param fontStyle The font style
- * @param color The text color
- * @param size The text size
+ * @param textColor The text color
+ * @param textSize The text size
  */
-enum class TextStyle(
-    val fontStyle: Int,
-    val color: Int,
-    val size: Float,
+data class TextStyle(
+    val fontFamily: FontFamily,
+    val fontStyle: FontStyle,
+    @ColorInt val textColor: Int,
+    val textSize: Float,
 ) {
-    BLACK(
-        fontStyle = Typeface.NORMAL,
-        color = Color.BLACK,
-        size = 128f,
-    );
+    /**
+     * Font family.
+     */
+    enum class FontFamily {
+        DEFAULT,
+        SANS_SERIF,
+        SERIF,
+        MONOSPACE,
+    }
 
-    fun toTextAction(text: String, position: PointF) = Action.Text(
-        text = text,
-        fontStyle = fontStyle,
-        color = color,
-        size = size,
-        position = position,
-    )
+    /**
+     * Font style.
+     */
+    enum class FontStyle {
+        NORMAL,
+        BOLD,
+        ITALIC,
+        BOLD_ITALIC,
+    }
+
+    companion object {
+        val DEFAULT = TextStyle(
+            fontFamily = FontFamily.DEFAULT,
+            fontStyle = FontStyle.NORMAL,
+            textColor = Color.BLACK,
+            textSize = 128f,
+        )
+    }
 }

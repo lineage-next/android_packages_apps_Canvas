@@ -28,17 +28,13 @@ sealed interface Action {
      * Add a text label to the image.
      *
      * @param text The text of the overlay
-     * @param fontStyle The font style
-     * @param color The text color
-     * @param size The text size
      * @param position The position relative to the image
+     * @param textStyle The text style
      */
     data class Text(
         val text: String,
-        val fontStyle: Int,
-        val color: Int,
-        val size: Float,
         val position: PointF,
+        val textStyle: TextStyle,
     ) : Action
 
     /**

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.Mode
+import org.lineageos.canvas.models.TextStyle
 import org.lineageos.canvas.ui.composables.BottomToolbar
 import org.lineageos.canvas.ui.composables.ImageContainer
 import org.lineageos.canvas.ui.composables.TextEditorOverlay
@@ -125,8 +126,10 @@ fun CanvasApp(
                     onConfirm = { text ->
                         textEditorPosition?.let { textEditorPosition ->
                             editViewModel.addAction(
-                                org.lineageos.canvas.models.TextStyle.BLACK.toTextAction(
-                                    text = text, position = textEditorPosition
+                                Action.Text(
+                                    text = text,
+                                    position = textEditorPosition,
+                                    textStyle = TextStyle.DEFAULT,
                                 )
                             )
                         }
