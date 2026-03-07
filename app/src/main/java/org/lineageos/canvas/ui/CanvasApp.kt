@@ -183,11 +183,10 @@ fun CanvasApp(
                         editViewModel.dismissTextEditor()
                     },
                     onConfirm = { text ->
-                        val pos = textEditorPosition
-                        if (pos != null) {
+                        textEditorPosition?.let { textEditorPosition ->
                             editViewModel.addAction(
                                 org.lineageos.canvas.models.TextStyle.BLACK.toTextAction(
-                                    text = text, position = pos
+                                    text = text, position = textEditorPosition
                                 )
                             )
                         }
@@ -448,7 +447,7 @@ fun ImageContainer(
     }
 
     LaunchedEffect(imageBounds) {
-        if (imageBounds != null) {
+        imageBounds?.let { imageBounds ->
             onBaseRectChange(imageBounds)
         }
     }
@@ -482,7 +481,7 @@ fun ImageContainer(
                 imageSize = it.painter.intrinsicSize
             })
 
-        if (imageBounds != null) {
+        imageBounds?.let { imageBounds ->
             actionsBitmap?.let {
                 Image(
                     modifier = Modifier.size(
@@ -494,7 +493,7 @@ fun ImageContainer(
                 )
             }
 
-            if (cropRect != null) {
+            cropRect?.let { cropRect ->
                 if (mode == Mode.RESIZE) {
                     ResizeOverlay(
                         imageBounds = imageBounds,

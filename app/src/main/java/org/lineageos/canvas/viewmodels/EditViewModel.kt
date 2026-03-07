@@ -91,7 +91,7 @@ class EditViewModel : ViewModel() {
         actions,
         _baseRect,
     ) { actions, baseRect ->
-        if (baseRect == null) return@combine null
+        val baseRect = baseRect ?: return@combine null
 
         val bitmap = createBitmap(
             baseRect.width().toInt(),
