@@ -14,7 +14,7 @@ sealed interface Action {
     data object Marker : Action
 
     data class Text(
-        val text: String?,
+        val text: String,
         val fontStyle: Int,
         val color: Int,
         val size: Float,

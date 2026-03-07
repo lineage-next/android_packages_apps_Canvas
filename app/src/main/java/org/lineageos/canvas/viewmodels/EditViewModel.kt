@@ -160,8 +160,6 @@ class EditViewModel : ViewModel() {
     private fun Action.drawInto(canvas: Canvas) {
         when (this) {
             is Action.Text -> {
-                requireNotNull(text)
-
                 val paint = Paint().apply {
                     isAntiAlias = true
                     color = color
