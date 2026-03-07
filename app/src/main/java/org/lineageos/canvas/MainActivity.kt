@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.util.Consumer
 import org.lineageos.canvas.ui.CanvasApp
 import org.lineageos.canvas.ui.theme.CanvasTheme
 import org.lineageos.canvas.viewmodels.UriViewModel
@@ -18,10 +19,22 @@ import org.lineageos.canvas.viewmodels.UriViewModel
 class MainActivity : ComponentActivity() {
     private val uriViewModel: UriViewModel by viewModels()
 
+    private val onNewIntentListener = Consumer<Intent> { intent ->
+        val uri = intent.takeIf { it.action == Intent.ACTION_EDIT }?.data ?: run {
+            finish()
+            return@Consumer
+        }
+
+        val isWritable = (intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0
+
+        uriViewModel.setUri(uri, isWritable)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        handleIntent(intent)
+        onNewIntentListener.accept(intent)
+        addOnNewIntentListener(onNewIntentListener)
 
         enableEdgeToEdge()
         setContent {
@@ -49,21 +62,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleIntent(intent)
-    }
+    override fun onDestroy() {
+        removeOnNewIntentListener(onNewIntentListener)
 
-    private fun handleIntent(intent: Intent?) {
-        val uri = intent?.takeIf { it.action == Intent.ACTION_EDIT }?.data
-        if (uri == null) {
-            finish()
-            return
-        }
-
-        val isWritable = (intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0
-
-        uriViewModel.setUri(uri, isWritable)
+        super.onDestroy()
     }
 }
