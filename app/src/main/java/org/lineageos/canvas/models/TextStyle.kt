@@ -5,22 +5,29 @@
 
 package org.lineageos.canvas.models
 
-import android.graphics.Color
-import androidx.annotation.ColorInt
+import androidx.compose.ui.graphics.Color
 
 /**
  * Text style.
  *
  * @param fontFamily The font family
- * @param fontStyle The font style
- * @param textColor The text color
- * @param textSize The text size
+ * @param size The text size
+ * @param color The text color
+ * @param alignment The text alignment
+ * @param bold Whether the text is bold
+ * @param italic Whether the text is italic
+ * @param underlined Whether the text is underlined
+ * @param strikethrough Whether the text is strikethrough
  */
 data class TextStyle(
     val fontFamily: FontFamily,
-    val fontStyle: FontStyle,
-    @ColorInt val textColor: Int,
-    val textSize: Float,
+    val size: Float,
+    val color: Color,
+    val alignment: Alignment = Alignment.LEFT,
+    val bold: Boolean = false,
+    val italic: Boolean = false,
+    val underlined: Boolean = false,
+    val strikethrough: Boolean = false,
 ) {
     /**
      * Font family.
@@ -32,22 +39,17 @@ data class TextStyle(
         MONOSPACE,
     }
 
-    /**
-     * Font style.
-     */
-    enum class FontStyle {
-        NORMAL,
-        BOLD,
-        ITALIC,
-        BOLD_ITALIC,
+    enum class Alignment {
+        LEFT,
+        CENTER,
+        RIGHT,
     }
 
     companion object {
         val DEFAULT = TextStyle(
             fontFamily = FontFamily.DEFAULT,
-            fontStyle = FontStyle.NORMAL,
-            textColor = Color.BLACK,
-            textSize = 128f,
+            size = 128f,
+            color = Color.White,
         )
     }
 }

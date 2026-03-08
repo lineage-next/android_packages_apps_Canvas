@@ -8,9 +8,9 @@ package org.lineageos.canvas.viewmodels
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.PointF
 import android.graphics.RectF
 import android.graphics.Typeface
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -61,15 +61,6 @@ class EditViewModel : ViewModel() {
 
     private val _mode = MutableStateFlow(Mode.RESIZE)
     val mode: StateFlow<Mode> = _mode.asStateFlow()
-
-    private val _showTextEditor = MutableStateFlow(false)
-    val showTextEditor: StateFlow<Boolean> = _showTextEditor.asStateFlow()
-
-    private val _textEditorPosition = MutableStateFlow<PointF?>(null)
-    val textEditorPosition: StateFlow<PointF?> = _textEditorPosition.asStateFlow()
-
-    private val _textEditorText = MutableStateFlow("")
-    val textEditorText: StateFlow<String> = _textEditorText.asStateFlow()
 
     val cropRect: StateFlow<RectF?> = combine(
         actions,
@@ -142,29 +133,18 @@ class EditViewModel : ViewModel() {
         historyList.redo()
     }
 
-    fun showTextEditor(position: PointF) {
-        _textEditorPosition.value = position
-        _textEditorText.value = ""
-        _showTextEditor.value = true
-    }
-
-    fun dismissTextEditor() {
-        _showTextEditor.value = false
-        _textEditorPosition.value = null
-        _textEditorText.value = ""
-    }
-
-    fun updateTextEditorText(text: String) {
-        _textEditorText.value = text
-    }
-
     private fun Action.drawInto(canvas: Canvas) {
         when (this) {
             is Action.Text -> {
                 val paint = Paint().apply {
                     isAntiAlias = true
-                    color = textStyle.textColor
-                    textSize = textStyle.textSize
+                    color = textStyle.color.toArgb()
+                    textSize = textStyle.size
+                    textAlign = when (textStyle.alignment) {
+                        TextStyle.Alignment.LEFT -> Paint.Align.LEFT
+                        TextStyle.Alignment.CENTER -> Paint.Align.CENTER
+                        TextStyle.Alignment.RIGHT -> Paint.Align.RIGHT
+                    }
                     typeface = Typeface.create(
                         when (textStyle.fontFamily) {
                             TextStyle.FontFamily.DEFAULT -> null
@@ -172,13 +152,15 @@ class EditViewModel : ViewModel() {
                             TextStyle.FontFamily.SERIF -> "serif"
                             TextStyle.FontFamily.MONOSPACE -> "monospace"
                         },
-                        when (textStyle.fontStyle) {
-                            TextStyle.FontStyle.NORMAL -> Typeface.NORMAL
-                            TextStyle.FontStyle.BOLD -> Typeface.BOLD
-                            TextStyle.FontStyle.ITALIC -> Typeface.ITALIC
-                            TextStyle.FontStyle.BOLD_ITALIC -> Typeface.BOLD_ITALIC
+                        when {
+                            textStyle.bold && textStyle.italic -> Typeface.BOLD_ITALIC
+                            textStyle.bold -> Typeface.BOLD
+                            textStyle.italic -> Typeface.ITALIC
+                            else -> Typeface.NORMAL
                         },
                     )
+                    isUnderlineText = textStyle.underlined
+                    isStrikeThruText = textStyle.strikethrough
                 }
 
                 canvas.drawText(text, position.x, position.y, paint)

@@ -5,6 +5,7 @@
 
 package org.lineageos.canvas.ui
 
+import android.graphics.PointF
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +17,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.Mode
-import org.lineageos.canvas.models.TextStyle
 import org.lineageos.canvas.ui.composables.BottomToolbar
 import org.lineageos.canvas.ui.composables.ImageContainer
 import org.lineageos.canvas.ui.composables.TextEditorOverlay
@@ -48,12 +51,11 @@ fun CanvasApp(
 
     val actionsBitmap by editViewModel.actionsBitmap.collectAsState()
 
-    val showTextEditor by editViewModel.showTextEditor.collectAsState()
-    val textEditorPosition by editViewModel.textEditorPosition.collectAsState()
-    val textEditorText by editViewModel.textEditorText.collectAsState()
-
     val currentUri = uri ?: return
 
+    var textEditorPosition by remember {
+        mutableStateOf<PointF?>(null)
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -96,8 +98,9 @@ fun CanvasApp(
                         editViewModel.commitPendingAction()
                     },
                     onImageClick = {
-                        if (mode == Mode.TEXT) {
-                            editViewModel.showTextEditor(it)
+                        when (mode) {
+                            Mode.TEXT -> textEditorPosition = it
+                            else -> {}
                         }
                     },
                 )
@@ -111,24 +114,21 @@ fun CanvasApp(
                 )
             }
 
-            if (showTextEditor) {
+            textEditorPosition?.let {
                 TextEditorOverlay(
-                    text = textEditorText,
-                    onTextChange = { editViewModel.updateTextEditorText(it) },
                     onDismiss = {
-                        editViewModel.dismissTextEditor()
+                        textEditorPosition = null
                     },
-                    onConfirm = { text ->
-                        textEditorPosition?.let { textEditorPosition ->
-                            editViewModel.addAction(
-                                Action.Text(
-                                    text = text,
-                                    position = textEditorPosition,
-                                    textStyle = TextStyle.DEFAULT,
-                                )
+                    onConfirm = { text, textStyle ->
+                        editViewModel.addAction(
+                            Action.Text(
+                                text = text,
+                                position = it,
+                                textStyle = textStyle,
                             )
-                        }
-                        editViewModel.dismissTextEditor()
+                        )
+
+                        textEditorPosition = null
                     },
                 )
             }

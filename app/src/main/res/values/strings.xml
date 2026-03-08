@@ -15,4 +15,25 @@
     <string name="eraser">Eraser</string>
 
     <string name="enter_text">Enter text…</string>
+
+    <!-- Text decorations -->
+    <string name="text_decoration_bold">Bold</string>
+    <string name="text_decoration_italic">Italic</string>
+    <string name="text_decoration_underlined">Underlined</string>
+    <string name="text_decoration_strikethrough">Strikethrough</string>
+
+    <!-- Text alignments -->
+    <string name="text_alignment_left">Left</string>
+    <string name="text_alignment_center">Center</string>
+    <string name="text_alignment_right">Right</string>
+
+    <!-- Text colors -->
+    <string name="text_color_white">White</string>
+    <string name="text_color_black">Black</string>
+    <string name="text_color_red">Red</string>
+    <string name="text_color_green">Green</string>
+    <string name="text_color_blue">Blue</string>
+    <string name="text_color_yellow">Yellow</string>
+    <string name="text_color_cyan">Cyan</string>
+    <string name="text_color_magenta">Magenta</string>
 </resources>
