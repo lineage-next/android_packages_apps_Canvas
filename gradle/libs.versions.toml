@@ -13,6 +13,7 @@ compose-material3 = "1.4.0-alpha17"
 compose-material-icons-extended = "1.7.8"
 core = "1.18.0-rc01"
 lifecycle = "2.10.0-alpha04"
+navigation3 = "1.1.0-alpha05"
 generatebp = "+"
 
 [libraries]
@@ -27,6 +28,8 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 
 [plugins]

@@ -60,6 +60,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.coil.compose)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -72,7 +74,9 @@ generateBp {
     versionName = android.defaultConfig.versionName!!
     availableInAOSP = { module ->
         when {
-            module.group.startsWith("androidx") -> true
+            module.group.startsWith("androidx") -> {
+                module.group != "androidx.navigation3"
+            }
             module.group.startsWith("org.jetbrains") -> true
             module.group == "com.google.android.material" -> true
             module.group == "com.google.guava" -> true

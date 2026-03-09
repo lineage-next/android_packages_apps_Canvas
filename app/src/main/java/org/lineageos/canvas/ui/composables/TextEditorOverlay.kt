@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -54,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,19 +63,17 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.lineageos.canvas.R
-import org.lineageos.canvas.models.TextStyle
 
 @Composable
 fun TextEditorOverlay(
     onDismiss: () -> Unit,
     onConfirm: (String, TextStyle) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val textFieldState = rememberTextFieldState()
 
-    var fontFamily by remember {
-        mutableStateOf(TextStyle.FontFamily.DEFAULT)
-    }
-    var textAlignment by remember { mutableStateOf(TextStyle.Alignment.CENTER) }
+    var fontFamily by remember { mutableStateOf(FontFamily.Default) }
+    var textAlignment by remember { mutableStateOf(TextAlign.Center) }
     var textColor by remember { mutableStateOf(Color.White) }
     var bold by remember { mutableStateOf(false) }
     var italic by remember { mutableStateOf(false) }
@@ -90,10 +88,29 @@ fun TextEditorOverlay(
         focusRequester.requestFocus()
     }
 
+    val textStyle = TextStyle(
+        color = textColor,
+        fontSize = 32.sp,
+        fontWeight = when (bold) {
+            true -> FontWeight.Bold
+            false -> FontWeight.Normal
+        },
+        fontStyle = when (italic) {
+            true -> FontStyle.Italic
+            false -> FontStyle.Normal
+        },
+        fontFamily = fontFamily,
+        textDecoration = when {
+            underlined && strikethrough -> TextDecoration.Underline + TextDecoration.LineThrough
+            underlined -> TextDecoration.Underline
+            strikethrough -> TextDecoration.LineThrough
+            else -> TextDecoration.None
+        },
+        textAlign = textAlignment,
+    )
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.8f)),
+        modifier = modifier.background(Color.Black.copy(alpha = 0.8f)),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
     ) {
         Row(
@@ -117,15 +134,7 @@ fun TextEditorOverlay(
                     when (text.isNotBlank()) {
                         true -> onConfirm(
                             text.toString(),
-                            TextStyle(
-                                fontFamily = fontFamily,
-                                size = TextStyle.DEFAULT.size,
-                                color = textColor,
-                                bold = bold,
-                                italic = italic,
-                                underlined = underlined,
-                                strikethrough = strikethrough,
-                            )
+                            textStyle,
                         )
 
                         false -> {}
@@ -170,8 +179,8 @@ fun TextEditorOverlay(
             TextAlignmentButton(
                 imageVector = Icons.AutoMirrored.Filled.FormatAlignLeft,
                 value = when (isRtl) {
-                    true -> TextStyle.Alignment.RIGHT
-                    false -> TextStyle.Alignment.LEFT
+                    true -> TextAlign.Right
+                    false -> TextAlign.Left
                 },
                 currentValue = textAlignment,
                 contentDescription = R.string.text_alignment_left,
@@ -179,7 +188,7 @@ fun TextEditorOverlay(
 
             TextAlignmentButton(
                 imageVector = Icons.Default.FormatAlignCenter,
-                value = TextStyle.Alignment.CENTER,
+                value = TextAlign.Center,
                 currentValue = textAlignment,
                 contentDescription = R.string.text_alignment_center,
             ) { textAlignment = it }
@@ -187,8 +196,8 @@ fun TextEditorOverlay(
             TextAlignmentButton(
                 imageVector = Icons.AutoMirrored.Filled.FormatAlignRight,
                 value = when (isRtl) {
-                    true -> TextStyle.Alignment.LEFT
-                    false -> TextStyle.Alignment.RIGHT
+                    true -> TextAlign.Left
+                    false -> TextAlign.Right
                 },
                 currentValue = textAlignment,
                 contentDescription = R.string.text_alignment_right,
@@ -221,26 +230,7 @@ fun TextEditorOverlay(
                 .weight(1f)
                 .padding(horizontal = 16.dp)
                 .focusRequester(focusRequester),
-            textStyle = androidx.compose.ui.text.TextStyle(
-                color = textColor,
-                fontSize = 32.sp,
-                fontWeight = when (bold) {
-                    true -> FontWeight.Bold
-                    false -> FontWeight.Normal
-                },
-                fontStyle = when (italic) {
-                    true -> FontStyle.Italic
-                    false -> FontStyle.Normal
-                },
-                fontFamily = fontFamily.toCompose(),
-                textDecoration = when {
-                    underlined && strikethrough -> TextDecoration.Underline + TextDecoration.LineThrough
-                    underlined -> TextDecoration.Underline
-                    strikethrough -> TextDecoration.LineThrough
-                    else -> TextDecoration.None
-                },
-                textAlign = textAlignment.toCompose(),
-            ),
+            textStyle = textStyle,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
@@ -251,24 +241,9 @@ fun TextEditorOverlay(
                 Text(
                     text = stringResource(R.string.enter_text),
                     modifier = Modifier.fillMaxWidth(),
-                    color = textColor.copy(alpha = 0.5f),
-                    fontSize = 32.sp,
-                    fontStyle = when (italic) {
-                        true -> FontStyle.Italic
-                        false -> FontStyle.Normal
-                    },
-                    fontWeight = when (bold) {
-                        true -> FontWeight.Bold
-                        false -> FontWeight.Normal
-                    },
-                    fontFamily = fontFamily.toCompose(),
-                    textDecoration = when {
-                        strikethrough && underlined -> TextDecoration.LineThrough + TextDecoration.Underline
-                        strikethrough -> TextDecoration.LineThrough
-                        underlined -> TextDecoration.Underline
-                        else -> TextDecoration.None
-                    },
-                    textAlign = textAlignment.toCompose(),
+                    style = textStyle.copy(
+                        color = textStyle.color.copy(alpha = 0.5f),
+                    ),
                 )
             },
         )
@@ -315,10 +290,10 @@ private fun TextPropertyButton(
 @Composable
 private fun TextAlignmentButton(
     imageVector: ImageVector,
-    value: TextStyle.Alignment,
-    currentValue: TextStyle.Alignment,
+    value: TextAlign,
+    currentValue: TextAlign,
     @StringRes contentDescription: Int,
-    onCheckedChange: (TextStyle.Alignment) -> Unit,
+    onCheckedChange: (TextAlign) -> Unit,
 ) {
     TextPropertyButton(
         imageVector = imageVector,
@@ -365,17 +340,4 @@ private fun TextColorButton(
             )
         }
     }
-}
-
-private fun TextStyle.FontFamily.toCompose() = when (this) {
-    TextStyle.FontFamily.DEFAULT -> FontFamily.Default
-    TextStyle.FontFamily.SANS_SERIF -> FontFamily.SansSerif
-    TextStyle.FontFamily.SERIF -> FontFamily.Serif
-    TextStyle.FontFamily.MONOSPACE -> FontFamily.Monospace
-}
-
-private fun TextStyle.Alignment.toCompose() = when (this) {
-    TextStyle.Alignment.LEFT -> TextAlign.Left
-    TextStyle.Alignment.CENTER -> TextAlign.Center
-    TextStyle.Alignment.RIGHT -> TextAlign.Right
 }

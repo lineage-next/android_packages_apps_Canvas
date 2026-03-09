@@ -5,8 +5,9 @@
 
 package org.lineageos.canvas.models
 
-import android.graphics.PointF
-import android.graphics.RectF
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
 
 /**
  * An action to apply to an image.
@@ -17,7 +18,7 @@ sealed interface Action {
      *
      * @param rect The rectangle to resize to
      */
-    data class Resize(val rect: RectF) : Action
+    data class Resize(val rect: IntRect) : Action
 
     /**
      * Draw a line on the image.
@@ -29,12 +30,12 @@ sealed interface Action {
      *
      * @param text The text of the overlay
      * @param position The position relative to the image
-     * @param textStyle The text style
+     * @param style The text style
      */
     data class Text(
         val text: String,
-        val position: PointF,
-        val textStyle: TextStyle,
+        val position: IntOffset,
+        val style: TextStyle,
     ) : Action
 
     /**

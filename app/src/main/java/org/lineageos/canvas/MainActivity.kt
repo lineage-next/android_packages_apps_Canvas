@@ -14,10 +14,11 @@ import androidx.activity.viewModels
 import androidx.core.util.Consumer
 import org.lineageos.canvas.ui.CanvasApp
 import org.lineageos.canvas.ui.theme.CanvasTheme
-import org.lineageos.canvas.viewmodels.UriViewModel
+import org.lineageos.canvas.viewmodels.EditViewModel
 
 class MainActivity : ComponentActivity() {
-    private val uriViewModel: UriViewModel by viewModels()
+    // View models
+    private val editViewModel: EditViewModel by viewModels()
 
     private val onNewIntentListener = Consumer<Intent> { intent ->
         val uri = intent.takeIf { it.action == Intent.ACTION_EDIT }?.data ?: run {
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
 
         val isWritable = (intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0
 
-        uriViewModel.setUri(uri, isWritable)
+        editViewModel.setUri(uri, isWritable)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,22 +41,30 @@ class MainActivity : ComponentActivity() {
         setContent {
             CanvasTheme {
                 CanvasApp(
-                    uriViewModel = uriViewModel,
-                    onSave = {
-                        val result = Intent().apply {
-                            data = it
-                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        }
-                        setResult(RESULT_OK, result)
+                    editViewModel = editViewModel,
+                    onClose = {
+                        setResult(RESULT_CANCELED, null)
                         finish()
                     },
-                    onShare = {
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "image/*"
-                            putExtra(Intent.EXTRA_STREAM, it)
-                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    onSave = {
+                        editViewModel.uri.value?.let {
+                            val result = Intent().apply {
+                                data = it
+                                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            }
+                            setResult(RESULT_OK, result)
+                            finish()
                         }
-                        startActivity(Intent.createChooser(intent, null))
+                    },
+                    onShare = {
+                        editViewModel.uri.value?.let {
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "image/*"
+                                putExtra(Intent.EXTRA_STREAM, it)
+                                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            }
+                            startActivity(Intent.createChooser(intent, null))
+                        }
                     },
                 )
             }

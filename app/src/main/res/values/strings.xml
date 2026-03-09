@@ -5,14 +5,24 @@
 -->
 <resources>
     <string name="app_name">Canvas</string>
+
+    <string name="close">Close</string>
     <string name="save">Save</string>
+    <string name="save_as">Save as…</string>
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
     <string name="share">Share</string>
-    <string name="resize">Resize</string>
-    <string name="text">Text</string>
-    <string name="marker">Marker</string>
-    <string name="eraser">Eraser</string>
+    <string name="more">More…</string>
+    <string name="back">Back</string>
+
+    <!-- Edit modes -->
+    <string name="edit_mode_resize">Resize</string>
+    <string name="edit_mode_rotation">Rotation</string>
+    <string name="edit_mode_marker">Marker</string>
+    <string name="edit_mode_highlighter">Highlighter</string>
+    <string name="edit_mode_text">Text</string>
+    <string name="edit_mode_brightness">Brightness</string>
+    <string name="edit_mode_contrast">Contrast</string>
 
     <string name="enter_text">Enter text…</string>
 
