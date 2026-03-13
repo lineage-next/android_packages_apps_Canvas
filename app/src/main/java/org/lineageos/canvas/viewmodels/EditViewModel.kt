@@ -8,7 +8,6 @@ package org.lineageos.canvas.viewmodels
 import android.app.Application
 import android.net.Uri
 import android.view.View
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ImageBitmap
@@ -17,9 +16,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.colorspace.ColorSpace
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -42,7 +38,10 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import org.lineageos.canvas.ext.size
 import org.lineageos.canvas.models.Action
+import org.lineageos.canvas.models.DrawingContext
 import org.lineageos.canvas.models.HistoryList
+import org.lineageos.canvas.models.applyActionsAndDraw
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditViewModel(application: Application) : AndroidViewModel(application) {
@@ -69,9 +68,14 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
     val isWritable = _isWritable.asStateFlow()
 
     /**
-     * The [FontFamily.Resolver] used to resolve fonts.
+     * The [DrawingContext] used to draw.
      */
-    private val fontFamilyResolver = createFontFamilyResolver(application)
+    private val drawingContext by lazy {
+        DrawingContext(
+            fontFamilyResolver = createFontFamilyResolver(application),
+            layoutDirection = getLayoutDirection(),
+        )
+    }
 
     /**
      * The untouched bitmap of the image.
@@ -140,11 +144,14 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         actions,
         sourceBitmap,
     ) { actions, sourceBitmap ->
-        val lastResize = actions.lastOrNull {
-            it is Action.Transformation.Resize
-        } as? Action.Transformation.Resize
+        val lastResizeIndex = actions.indexOfLast { it is Action.Transformation.Resize }
+        val lastRotationIndex = actions.indexOfLast { it is Action.Transformation.Rotation }
 
-        lastResize?.rect ?: sourceBitmap?.size?.toIntRect()
+        val validResize = if (lastResizeIndex > lastRotationIndex) {
+            actions[lastResizeIndex] as Action.Transformation.Resize
+        } else null
+
+        validResize?.rect ?: sourceBitmap?.size?.toIntRect()
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -170,24 +177,6 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
         sourceBitmap
     }
-
-    /**
-     * Blank bitmap with [Action.Drawing]s applied, used for cropping.
-     */
-    val drawingActionsBitmap = combine(
-        sourceBitmap,
-        actions,
-    ) { sourceBitmap, actions ->
-        val sourceBitmap = sourceBitmap ?: return@combine null
-
-        sourceBitmap.createEmptyBitmap(
-            hasAlpha = true,
-        ).draw {
-            actions.forEach { action ->
-                drawAction(action)
-            }
-        }
-    }
         .flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
@@ -196,20 +185,26 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     /**
-     * Source bitmap with [Action.Adjustment]s applied and [Action.Drawing]s applied, used by the
-     * resize screen.
+     * Rotated source bitmap composited with the drawing layer.
+     * Used by the resize/crop screen.
      */
     val adjustedBitmapWithActions = combine(
         sourceBitmapWithAdjustments,
-        drawingActionsBitmap,
-    ) { sourceBitmapWithAdjustments, drawingActionsBitmap ->
-        val sourceBitmapWithAdjustments = sourceBitmapWithAdjustments ?: return@combine null
-        val drawingActionsBitmap = drawingActionsBitmap ?: return@combine null
+        actions,
+    ) { sourceBitmap, actions ->
+        val sourceBitmap = sourceBitmap ?: return@combine null
 
-        sourceBitmapWithAdjustments.createEmptyBitmap().draw {
-            drawImage(sourceBitmapWithAdjustments)
+        val totalRotation = actions
+            .filterIsInstance<Action.Transformation.Rotation>()
+            .fold(0f) { acc, action -> (acc + action.rotation.degrees) % 360f }
 
-            drawImage(drawingActionsBitmap)
+        val isSwapped = (totalRotation / 90f).roundToInt() % 2 != 0
+
+        sourceBitmap.createEmptyBitmap(
+            width = if (isSwapped) sourceBitmap.height else sourceBitmap.width,
+            height = if (isSwapped) sourceBitmap.width else sourceBitmap.height,
+        ).draw {
+            applyActionsAndDraw(sourceBitmap, actions, drawingContext)
         }
     }
         .flowOn(Dispatchers.IO)
@@ -226,17 +221,17 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         adjustedBitmapWithActions,
         cropRect,
     ) { adjustedBitmapWithActions, cropRect ->
-        val adjustedBitmapWithActions = adjustedBitmapWithActions ?: return@combine null
-        val cropRect = cropRect ?: adjustedBitmapWithActions.size.toIntRect()
+        val bitmap = adjustedBitmapWithActions ?: return@combine null
+        val crop = cropRect ?: bitmap.size.toIntRect()
 
-        adjustedBitmapWithActions.createEmptyBitmap(
-            width = cropRect.width,
-            height = cropRect.height,
+        bitmap.createEmptyBitmap(
+            width = crop.width,
+            height = crop.height,
         ).draw {
             drawImage(
-                image = adjustedBitmapWithActions,
-                srcOffset = cropRect.topLeft,
-                srcSize = cropRect.size,
+                image = bitmap,
+                srcOffset = crop.topLeft,
+                srcSize = crop.size,
             )
         }
     }
@@ -275,48 +270,6 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         historyList.redo()
     }
 
-    private fun DrawScope.drawAction(action: Action) {
-        when (action) {
-            is Action.Adjustment -> when (action) {
-                is Action.Adjustment.Brightness -> {
-                    // Handled in another place
-                }
-
-                is Action.Adjustment.Contrast -> {
-                    // Handled in another place
-                }
-            }
-
-            is Action.Transformation -> when (action) {
-                is Action.Transformation.Resize -> {
-                    // Handled in another place
-                }
-            }
-
-            is Action.Drawing -> when (action) {
-                is Action.Drawing.Text -> {
-                    val textMeasurer = TextMeasurer(
-                        defaultFontFamilyResolver = fontFamilyResolver,
-                        defaultDensity = this,
-                        defaultLayoutDirection = layoutDirection,
-                    )
-
-                    drawText(
-                        textMeasurer = textMeasurer,
-                        text = action.text,
-                        topLeft = Offset(
-                            action.position.x.toFloat(),
-                            action.position.y.toFloat(),
-                        ),
-                        style = action.style,
-                    )
-                }
-
-                else -> TODO()
-            }
-        }
-    }
-
     /**
      * Get the layout direction.
      */
@@ -330,7 +283,7 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
      * Draw the [DrawScope] into this [ImageBitmap].
      */
     private fun ImageBitmap.draw(
-        density: Density = Density(1f), // TODO: Density(context) exists, but this might be ok
+        density: Density = Density(application.resources.displayMetrics.density),
         layoutDirection: LayoutDirection = getLayoutDirection(),
         canvas: Canvas = Canvas(this),
         size: Size = Size(width.toFloat(), height.toFloat()),

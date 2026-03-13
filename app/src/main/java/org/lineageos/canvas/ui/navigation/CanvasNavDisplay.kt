@@ -21,6 +21,7 @@ import org.lineageos.canvas.models.EditMode
 import org.lineageos.canvas.ui.LocalSharedTransitionScope
 import org.lineageos.canvas.ui.screens.HomeScreen
 import org.lineageos.canvas.ui.screens.ResizeScreen
+import org.lineageos.canvas.ui.screens.RotationScreen
 import org.lineageos.canvas.ui.screens.TextScreen
 
 @Composable
@@ -59,7 +60,16 @@ fun CanvasNavDisplay(
                     onCancel = navigationBackStack::removeLastOrNull,
                 )
 
-                EditMode.ROTATION -> TODO()
+                EditMode.ROTATION -> RotationScreen(
+                    innerPadding = innerPadding,
+                    imageBitmap = finalResultBitmap,
+                    cropRect = cropRect,
+                    onConfirm = { action ->
+                        onAddAction(action)
+                        navigationBackStack.removeLastOrNull()
+                    },
+                    onCancel = navigationBackStack::removeLastOrNull,
+                )
 
                 EditMode.MARKER -> TODO()
 
