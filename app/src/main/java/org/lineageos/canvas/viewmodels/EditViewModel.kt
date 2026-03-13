@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.colorspace.ColorSpace
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
@@ -42,7 +43,9 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import org.lineageos.canvas.ext.size
 import org.lineageos.canvas.models.Action
+import org.lineageos.canvas.models.DrawingGroup
 import org.lineageos.canvas.models.HistoryList
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditViewModel(application: Application) : AndroidViewModel(application) {
@@ -140,11 +143,15 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         actions,
         sourceBitmap,
     ) { actions, sourceBitmap ->
-        val lastResize = actions.lastOrNull {
-            it is Action.Transformation.Resize
-        } as? Action.Transformation.Resize
+        val lastResizeIndex = actions.indexOfLast { it is Action.Transformation.Resize }
+        val lastRotationIndex = actions.indexOfLast { it is Action.Transformation.Rotation }
 
-        lastResize?.rect ?: sourceBitmap?.size?.toIntRect()
+        // Discard the crop if a rotation happened after it
+        val validResize = if (lastResizeIndex > lastRotationIndex) {
+            actions[lastResizeIndex] as Action.Transformation.Resize
+        } else null
+
+        validResize?.rect ?: sourceBitmap?.size?.toIntRect()
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -170,21 +177,120 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
         sourceBitmap
     }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = null,
+        )
 
     /**
-     * Blank bitmap with [Action.Drawing]s applied, used for cropping.
+     * The clockwise rotation in degrees accumulated from all [Action.Transformation.Rotation] actions.
+     */
+    private val totalRotation = actions
+        .mapLatest {
+            it.filterIsInstance<Action.Transformation.Rotation>()
+                .fold(0f) { acc, action -> (acc + action.rotation.degrees) % 360f }
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = 0f,
+        )
+
+    /**
+     * Partitions the action list into [DrawingGroup]s.
+     */
+    private fun partitionIntoDrawingGroups(
+        actions: List<Action>,
+        sourceWidth: Int,
+        sourceHeight: Int,
+    ): List<DrawingGroup> {
+        val groups = mutableListOf<DrawingGroup>()
+        var cumulativeAngle = 0f
+        var currentWidth = sourceWidth
+        var currentHeight = sourceHeight
+        var currentDrawings = mutableListOf<Action.Drawing>()
+
+        for (action in actions) {
+            when (action) {
+                is Action.Transformation.Rotation -> {
+                    groups += DrawingGroup(
+                        cumulativeAngle,
+                        currentWidth,
+                        currentHeight,
+                        currentDrawings,
+                    )
+                    cumulativeAngle = (cumulativeAngle + action.rotation.degrees) % 360f
+                    if (action.rotation.degrees % 180f != 0f) {
+                        val tmp = currentWidth; currentWidth = currentHeight; currentHeight = tmp
+                    }
+                    currentDrawings = mutableListOf()
+                }
+
+                is Action.Drawing -> currentDrawings += action
+                else -> {}
+            }
+        }
+
+        groups += DrawingGroup(
+            cumulativeAngle,
+            currentWidth,
+            currentHeight,
+            currentDrawings,
+        )
+        return groups
+    }
+
+    /**
+     * Blank bitmap with [Action.Drawing]s applied in their respective rotation spaces.
+     *
+     * Each [DrawingGroup] is drawn onto the final-orientation canvas with a compensating
+     * [withTransform] rotation so that coordinates authored before earlier rotations are
+     * placed correctly in the final output space.
+     *
+     * The bitmap dimensions already reflect the final rotation (width/height swapped for
+     * 90°/270°), so this bitmap can be composited directly onto the rotated source.
      */
     val drawingActionsBitmap = combine(
         sourceBitmap,
         actions,
-    ) { sourceBitmap, actions ->
+        totalRotation,
+    ) { sourceBitmap, actions, totalRotation ->
         val sourceBitmap = sourceBitmap ?: return@combine null
 
+        val isSwapped = (totalRotation / 90f).roundToInt() % 2 != 0
+        val targetWidth = if (isSwapped) sourceBitmap.height else sourceBitmap.width
+        val targetHeight = if (isSwapped) sourceBitmap.width else sourceBitmap.height
+
+        val erasedMarkers = actions
+            .filterIsInstance<Action.Drawing.Eraser>()
+            .map { it.marker }
+            .toSet()
+
+        val groups = partitionIntoDrawingGroups(
+            actions,
+            sourceBitmap.width,
+            sourceBitmap.height,
+        )
+
         sourceBitmap.createEmptyBitmap(
+            width = targetWidth,
+            height = targetHeight,
             hasAlpha = true,
         ).draw {
-            actions.forEach { action ->
-                drawAction(action)
+            for (group in groups) {
+                val remainingAngle = (totalRotation - group.rotationBefore + 360f) % 360f
+
+                withTransform({
+                    rotate(
+                        degrees = remainingAngle,
+                        pivot = Offset(group.widthBefore / 2f, group.heightBefore / 2f)
+                    )
+                }) {
+                    group.drawings.forEach { drawDrawingAction(it, erasedMarkers) }
+                }
             }
         }
     }
@@ -196,19 +302,58 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     /**
-     * Source bitmap with [Action.Adjustment]s applied and [Action.Drawing]s applied, used by the
-     * resize screen.
+     * Source bitmap with [Action.Adjustment]s and [Action.Transformation.Rotation]s applied,
+     * used for compositing with the drawing layer.
+     */
+    val rotatedSourceBitmap = combine(
+        sourceBitmapWithAdjustments,
+        totalRotation,
+    ) { sourceBitmapWithAdjustments, totalRotation ->
+        val sourceBitmapWithAdjustments = sourceBitmapWithAdjustments ?: return@combine null
+
+        if (totalRotation == 0f) return@combine sourceBitmapWithAdjustments
+
+        val isSwapped = (totalRotation / 90f).roundToInt() % 2 != 0
+        val targetWidth =
+            if (isSwapped) sourceBitmapWithAdjustments.height else sourceBitmapWithAdjustments.width
+        val targetHeight =
+            if (isSwapped) sourceBitmapWithAdjustments.width else sourceBitmapWithAdjustments.height
+
+        sourceBitmapWithAdjustments.createEmptyBitmap(
+            width = targetWidth,
+            height = targetHeight,
+        ).draw {
+            withTransform({
+                rotate(totalRotation, Offset(targetWidth / 2f, targetHeight / 2f))
+                translate(
+                    left = (targetWidth - sourceBitmapWithAdjustments.width) / 2f,
+                    top = (targetHeight - sourceBitmapWithAdjustments.height) / 2f,
+                )
+            }) {
+                drawImage(sourceBitmapWithAdjustments)
+            }
+        }
+    }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = null,
+        )
+
+    /**
+     * Rotated source bitmap composited with the drawing layer.
+     * Used by the resize/crop screen.
      */
     val adjustedBitmapWithActions = combine(
-        sourceBitmapWithAdjustments,
+        rotatedSourceBitmap,
         drawingActionsBitmap,
-    ) { sourceBitmapWithAdjustments, drawingActionsBitmap ->
-        val sourceBitmapWithAdjustments = sourceBitmapWithAdjustments ?: return@combine null
+    ) { rotatedSourceBitmap, drawingActionsBitmap ->
+        val rotatedSourceBitmap = rotatedSourceBitmap ?: return@combine null
         val drawingActionsBitmap = drawingActionsBitmap ?: return@combine null
 
-        sourceBitmapWithAdjustments.createEmptyBitmap().draw {
-            drawImage(sourceBitmapWithAdjustments)
-
+        rotatedSourceBitmap.createEmptyBitmap().draw {
+            drawImage(rotatedSourceBitmap)
             drawImage(drawingActionsBitmap)
         }
     }
@@ -275,44 +420,46 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         historyList.redo()
     }
 
-    private fun DrawScope.drawAction(action: Action) {
+    /**
+     * Draws a single [Action.Drawing] onto the current [DrawScope].
+     * Rotation is handled at the call site via [withTransform] — do not apply any coordinate
+     * transform here.
+     *
+     * @param action the drawing action to render
+     * @param erasedMarkers the set of [Action.Drawing.Marker]s that have been erased and must
+     *   be skipped
+     */
+    private fun DrawScope.drawDrawingAction(
+        action: Action.Drawing,
+        erasedMarkers: Set<Action.Drawing.Marker>,
+    ) {
         when (action) {
-            is Action.Adjustment -> when (action) {
-                is Action.Adjustment.Brightness -> {
-                    // Handled in another place
-                }
+            is Action.Drawing.Text -> {
+                val textMeasurer = TextMeasurer(
+                    defaultFontFamilyResolver = fontFamilyResolver,
+                    defaultDensity = this,
+                    defaultLayoutDirection = layoutDirection,
+                )
 
-                is Action.Adjustment.Contrast -> {
-                    // Handled in another place
+                drawText(
+                    textMeasurer = textMeasurer,
+                    text = action.text,
+                    topLeft = Offset(
+                        action.position.x.toFloat(),
+                        action.position.y.toFloat(),
+                    ),
+                    style = action.style,
+                )
+            }
+
+            is Action.Drawing.Marker -> {
+                if (action !in erasedMarkers) {
+                    // TODO: drawMarker(action)
                 }
             }
 
-            is Action.Transformation -> when (action) {
-                is Action.Transformation.Resize -> {
-                    // Handled in another place
-                }
-            }
-
-            is Action.Drawing -> when (action) {
-                is Action.Drawing.Text -> {
-                    val textMeasurer = TextMeasurer(
-                        defaultFontFamilyResolver = fontFamilyResolver,
-                        defaultDensity = this,
-                        defaultLayoutDirection = layoutDirection,
-                    )
-
-                    drawText(
-                        textMeasurer = textMeasurer,
-                        text = action.text,
-                        topLeft = Offset(
-                            action.position.x.toFloat(),
-                            action.position.y.toFloat(),
-                        ),
-                        style = action.style,
-                    )
-                }
-
-                else -> TODO()
+            is Action.Drawing.Eraser -> {
+                // Handled via erasedMarkers pre-pass at the call site.
             }
         }
     }
