@@ -209,7 +209,7 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
      * @param uri the URI of the image to edit
      * @param isWritable whether the image is writable
      */
-    fun setUri(uri: Uri?, isWritable: Boolean) {
+    fun setUri(uri: Uri, isWritable: Boolean) {
         _uri.value = uri
         _isWritable.value = isWritable
     }
