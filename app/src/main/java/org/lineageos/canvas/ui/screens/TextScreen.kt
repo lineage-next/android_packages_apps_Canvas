@@ -80,7 +80,7 @@ fun TextScreen(
                         textEditorPosition = null
                     },
                     onConfirm = { text, textStyle ->
-                        val action = Action.Text(
+                        val action = Action.Drawing.Text(
                             text = text,
                             position = it,
                             style = textStyle,

@@ -50,7 +50,7 @@ fun CanvasApp(
 
     val cropRect by editViewModel.cropRect.collectAsState()
 
-    val bitmapWithOverlayActions by editViewModel.bitmapWithOverlayActions.collectAsState()
+    val adjustedBitmapWithActions by editViewModel.adjustedBitmapWithActions.collectAsState()
     val finalResultBitmap by editViewModel.finalResultBitmap.collectAsState()
 
     var currentCategory by remember { mutableStateOf<EditMode.Category?>(null) }
@@ -78,7 +78,7 @@ fun CanvasApp(
                     CanvasNavDisplay(
                         innerPadding = innerPadding,
                         navigationBackStack = navigationBackStack,
-                        bitmapWithOverlayActions = bitmapWithOverlayActions ?: return@Scaffold,
+                        bitmapWithOverlayActions = adjustedBitmapWithActions ?: return@Scaffold,
                         finalResultBitmap = finalResultBitmap ?: return@Scaffold,
                         cropRect = cropRect ?: return@Scaffold,
                         onAddAction = editViewModel::addAction,

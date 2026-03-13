@@ -100,7 +100,7 @@ fun ResizeScreen(
                             cropRect
                         )
 
-                        val action = Action.Resize(
+                        val action = Action.Transformation.Resize(
                             rect = originalImageCropRect,
                         )
 

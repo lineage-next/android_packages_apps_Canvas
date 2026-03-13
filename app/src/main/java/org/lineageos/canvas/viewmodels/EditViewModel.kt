@@ -140,7 +140,9 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         actions,
         sourceBitmap,
     ) { actions, sourceBitmap ->
-        val lastResize = actions.lastOrNull { it is Action.Resize } as? Action.Resize
+        val lastResize = actions.lastOrNull {
+            it is Action.Transformation.Resize
+        } as? Action.Transformation.Resize
 
         lastResize?.rect ?: sourceBitmap?.size?.toIntRect()
     }
@@ -152,17 +154,35 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     /**
-     * Original bitmap with overlay actions applied, used for cropping.
+     * Source bitmap with [Action.Adjustment]s applied.
      */
-    val bitmapWithOverlayActions = combine(
+    val sourceBitmapWithAdjustments = combine(
         sourceBitmap,
         actions,
     ) { sourceBitmap, actions ->
         val sourceBitmap = sourceBitmap ?: return@combine null
 
-        sourceBitmap.createEmptyBitmap().draw {
-            drawImage(sourceBitmap)
+        val adjustmentActions = actions.filterIsInstance<Action.Adjustment>().ifEmpty {
+            return@combine sourceBitmap
+        }
 
+        // TODO: Apply them
+
+        sourceBitmap
+    }
+
+    /**
+     * Blank bitmap with [Action.Drawing]s applied, used for cropping.
+     */
+    val drawingActionsBitmap = combine(
+        sourceBitmap,
+        actions,
+    ) { sourceBitmap, actions ->
+        val sourceBitmap = sourceBitmap ?: return@combine null
+
+        sourceBitmap.createEmptyBitmap(
+            hasAlpha = true,
+        ).draw {
             actions.forEach { action ->
                 drawAction(action)
             }
@@ -176,21 +196,45 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     /**
+     * Source bitmap with [Action.Adjustment]s applied and [Action.Drawing]s applied, used by the
+     * resize screen.
+     */
+    val adjustedBitmapWithActions = combine(
+        sourceBitmapWithAdjustments,
+        drawingActionsBitmap,
+    ) { sourceBitmapWithAdjustments, drawingActionsBitmap ->
+        val sourceBitmapWithAdjustments = sourceBitmapWithAdjustments ?: return@combine null
+        val drawingActionsBitmap = drawingActionsBitmap ?: return@combine null
+
+        sourceBitmapWithAdjustments.createEmptyBitmap().draw {
+            drawImage(sourceBitmapWithAdjustments)
+
+            drawImage(drawingActionsBitmap)
+        }
+    }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = null,
+        )
+
+    /**
      * The final result.
      */
     val finalResultBitmap = combine(
-        bitmapWithOverlayActions,
+        adjustedBitmapWithActions,
         cropRect,
-    ) { bitmapWithOverlayActions, cropRect ->
-        val bitmapWithOverlayActions = bitmapWithOverlayActions ?: return@combine null
-        val cropRect = cropRect ?: bitmapWithOverlayActions.size.toIntRect()
+    ) { adjustedBitmapWithActions, cropRect ->
+        val adjustedBitmapWithActions = adjustedBitmapWithActions ?: return@combine null
+        val cropRect = cropRect ?: adjustedBitmapWithActions.size.toIntRect()
 
-        bitmapWithOverlayActions.createEmptyBitmap(
+        adjustedBitmapWithActions.createEmptyBitmap(
             width = cropRect.width,
             height = cropRect.height,
         ).draw {
             drawImage(
-                image = bitmapWithOverlayActions,
+                image = adjustedBitmapWithActions,
                 srcOffset = cropRect.topLeft,
                 srcSize = cropRect.size,
             )
@@ -233,29 +277,43 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun DrawScope.drawAction(action: Action) {
         when (action) {
-            is Action.Resize -> {
-                // Handled in another place
+            is Action.Adjustment -> when (action) {
+                is Action.Adjustment.Brightness -> {
+                    // Handled in another place
+                }
+
+                is Action.Adjustment.Contrast -> {
+                    // Handled in another place
+                }
             }
 
-            is Action.Text -> {
-                val textMeasurer = TextMeasurer(
-                    defaultFontFamilyResolver = fontFamilyResolver,
-                    defaultDensity = this,
-                    defaultLayoutDirection = layoutDirection,
-                )
-
-                drawText(
-                    textMeasurer = textMeasurer,
-                    text = action.text,
-                    topLeft = Offset(
-                        action.position.x.toFloat(),
-                        action.position.y.toFloat(),
-                    ),
-                    style = action.style,
-                )
+            is Action.Transformation -> when (action) {
+                is Action.Transformation.Resize -> {
+                    // Handled in another place
+                }
             }
 
-            else -> {}
+            is Action.Drawing -> when (action) {
+                is Action.Drawing.Text -> {
+                    val textMeasurer = TextMeasurer(
+                        defaultFontFamilyResolver = fontFamilyResolver,
+                        defaultDensity = this,
+                        defaultLayoutDirection = layoutDirection,
+                    )
+
+                    drawText(
+                        textMeasurer = textMeasurer,
+                        text = action.text,
+                        topLeft = Offset(
+                            action.position.x.toFloat(),
+                            action.position.y.toFloat(),
+                        ),
+                        style = action.style,
+                    )
+                }
+
+                else -> TODO()
+            }
         }
     }
 
