@@ -58,6 +58,7 @@ fun CanvasTopAppBar(
     currentScreen: Screen,
     isWritable: Boolean,
     onSave: () -> Unit,
+    onSaveAs: () -> Unit,
     onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -191,7 +192,7 @@ fun CanvasTopAppBar(
                             stringResource(R.string.save_as).let {
                                 DropdownMenuItem(
                                     text = { Text(it) },
-                                    onClick = { TODO() },
+                                    onClick = { onSaveAs() },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Outlined.SaveAs,

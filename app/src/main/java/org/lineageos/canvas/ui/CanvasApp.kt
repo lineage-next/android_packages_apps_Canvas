@@ -40,6 +40,7 @@ fun CanvasApp(
     editViewModel: EditViewModel,
     onClose: () -> Unit,
     onSave: () -> Unit,
+    onSaveAs: () -> Unit,
     onShare: () -> Unit,
 ) {
     val isWritable by editViewModel.isWritable.collectAsState()
@@ -68,6 +69,7 @@ fun CanvasApp(
                         currentScreen = navigationBackStack.last(),
                         isWritable = isWritable,
                         onSave = onSave,
+                        onSaveAs = onSaveAs,
                         onShare = onShare,
                     )
                 },
