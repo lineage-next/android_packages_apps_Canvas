@@ -172,44 +172,21 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Blank bitmap with [Action.Drawing]s applied, used for cropping.
-     */
-    val drawingActionsBitmap = combine(
-        sourceBitmap,
-        actions,
-    ) { sourceBitmap, actions ->
-        val sourceBitmap = sourceBitmap ?: return@combine null
-
-        sourceBitmap.createEmptyBitmap(
-            hasAlpha = true,
-        ).draw {
-            actions.forEach { action ->
-                drawAction(action)
-            }
-        }
-    }
-        .flowOn(Dispatchers.IO)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = null,
-        )
-
-    /**
      * Source bitmap with [Action.Adjustment]s applied and [Action.Drawing]s applied, used by the
      * resize screen.
      */
     val adjustedBitmapWithActions = combine(
         sourceBitmapWithAdjustments,
-        drawingActionsBitmap,
-    ) { sourceBitmapWithAdjustments, drawingActionsBitmap ->
+        actions,
+    ) { sourceBitmapWithAdjustments, actions ->
         val sourceBitmapWithAdjustments = sourceBitmapWithAdjustments ?: return@combine null
-        val drawingActionsBitmap = drawingActionsBitmap ?: return@combine null
 
         sourceBitmapWithAdjustments.createEmptyBitmap().draw {
             drawImage(sourceBitmapWithAdjustments)
 
-            drawImage(drawingActionsBitmap)
+            actions.forEach { action ->
+                drawAction(action)
+            }
         }
     }
         .flowOn(Dispatchers.IO)
