@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import org.lineageos.canvas.models.EditStatus
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 /**
  * View model used by the activity to do actions with the final bitmap.
@@ -87,22 +88,31 @@ class ResultOpsViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun saveImageToUri(bitmap: ImageBitmap, targetUri: Uri) {
-        val mimeType = mimeType.value ?: return
+        val sourceUri = uri.value
 
         viewModelScope.launch {
             _editStatus.value = EditStatus.Saving
 
             _editStatus.value = withContext(Dispatchers.IO) {
                 runCatching {
+                    val mimeType = contentResolver.getType(targetUri)
+                        ?: sourceUri?.let(contentResolver::getType)
+                        ?: throw IOException("Unable to determine image type")
+
                     val format = when (mimeType) {
                         "image/jpeg" -> Bitmap.CompressFormat.JPEG
                         "image/png" -> Bitmap.CompressFormat.PNG
                         "image/webp" -> Bitmap.CompressFormat.WEBP_LOSSLESS
-                        else -> Bitmap.CompressFormat.JPEG
+                        else -> throw IOException("Unsupported image type: $mimeType")
                     }
 
-                    contentResolver.openOutputStream(targetUri, "wt")?.use {
-                        bitmap.asAndroidBitmap().compress(format, 100, it)
+                    val outputStream = contentResolver.openOutputStream(targetUri, "wt")
+                        ?: throw IOException("Unable to open output stream")
+
+                    outputStream.use {
+                        if (!bitmap.asAndroidBitmap().compress(format, 100, it)) {
+                            throw IOException("Image compression failed")
+                        }
                     }
                 }.fold(
                     onSuccess = {
