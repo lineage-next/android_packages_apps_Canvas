@@ -14,6 +14,8 @@
     <string name="share">Share</string>
     <string name="more">More…</string>
     <string name="back">Back</string>
+    <string name="cancel_action">Cancel action</string>
+    <string name="confirm_action">Confirm action</string>
 
     <!-- Edit modes -->
     <string name="edit_mode_crop">Crop</string>
