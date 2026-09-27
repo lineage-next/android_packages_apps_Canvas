@@ -7,9 +7,6 @@ package org.lineageos.canvas.models
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * Generic collection for history purpose, supporting undo/redo.
@@ -56,9 +53,9 @@ class HistoryList<E>(collection: Collection<E>) {
     private val currentIndex = MutableStateFlow(-1)
 
     /**
-     * Transactions mutex.
+     * Serializes synchronous history mutations.
      */
-    private val mutex = Mutex()
+    private val lock = Any()
 
     /**
      * Whether we can go back.
@@ -129,11 +126,13 @@ class HistoryList<E>(collection: Collection<E>) {
         currentIndex = currentIndex.value,
     )
 
-    private fun transaction(block: () -> Boolean) = runBlocking {
-        mutex.withLock {
-            if (block()) {
+    private fun transaction(block: () -> Boolean): Boolean {
+        return synchronized(lock) {
+            val changed = block()
+            if (changed) {
                 _snapshot.value = takeSnapshot()
             }
+            changed
         }
     }
 
