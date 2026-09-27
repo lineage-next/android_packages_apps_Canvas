@@ -10,19 +10,25 @@ import android.net.Uri
 import android.view.View
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageBitmapConfig
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.colorspace.ColorSpace
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toIntRect
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
@@ -151,7 +157,7 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
                 is Action.Transformation.Crop -> currentBitmap.crop(action.rect)
                 is Action.Transformation.Rotation -> currentBitmap.rotateBy(action.rotation)
 
-                is Action.Drawing -> currentBitmap.createEmptyBitmap().draw {
+                is Action.Drawing -> currentBitmap.createEmptyBitmap(hasAlpha = true).draw {
                     drawImage(currentBitmap)
                     drawAction(action)
                 }
@@ -237,6 +243,8 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             is Action.Drawing -> when (action) {
+                is Action.Drawing.Marker -> drawMarker(action)
+
                 is Action.Drawing.Text -> {
                     val textMeasurer = TextMeasurer(
                         defaultFontFamilyResolver = fontFamilyResolver,
@@ -255,9 +263,49 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
 
-                else -> TODO()
+                is Action.Drawing.Eraser -> drawMarker(
+                    marker = action.marker,
+                    blendMode = BlendMode.Clear,
+                )
             }
         }
+    }
+
+    private fun DrawScope.drawMarker(
+        marker: Action.Drawing.Marker,
+        blendMode: BlendMode = BlendMode.SrcOver,
+    ) {
+        val points = marker.points
+        if (points.isEmpty()) return
+
+        val firstPoint = points.first().toOffset()
+        if (points.size == 1) {
+            drawCircle(
+                color = marker.color,
+                radius = marker.strokeWidth / 2f,
+                center = firstPoint,
+                blendMode = blendMode,
+            )
+            return
+        }
+
+        val path = Path().apply {
+            moveTo(firstPoint.x, firstPoint.y)
+            points.drop(1).forEach { point ->
+                lineTo(point.x.toFloat(), point.y.toFloat())
+            }
+        }
+
+        drawPath(
+            path = path,
+            color = marker.color,
+            style = Stroke(
+                width = marker.strokeWidth,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+            blendMode = blendMode,
+        )
     }
 
     /**

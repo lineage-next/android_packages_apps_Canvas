@@ -21,6 +21,7 @@ import org.lineageos.canvas.models.EditMode
 import org.lineageos.canvas.ui.LocalSharedTransitionScope
 import org.lineageos.canvas.ui.screens.HomeScreen
 import org.lineageos.canvas.ui.screens.CropScreen
+import org.lineageos.canvas.ui.screens.MarkerScreen
 import org.lineageos.canvas.ui.screens.RotationScreen
 import org.lineageos.canvas.ui.screens.TextScreen
 
@@ -71,7 +72,12 @@ fun CanvasNavDisplay(
                     onCancel = navigationBackStack::removeLastOrNull,
                 )
 
-                EditMode.MARKER -> TODO()
+                EditMode.MARKER -> MarkerScreen(
+                    innerPadding = innerPadding,
+                    imageBitmap = finalResultBitmap,
+                    onAddAction = onAddAction,
+                    onCancel = navigationBackStack::removeLastOrNull,
+                )
 
                 EditMode.HIGHLIGHTER -> TODO()
 

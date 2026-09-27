@@ -5,6 +5,7 @@
 
 package org.lineageos.canvas.models
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -50,9 +51,17 @@ sealed interface Action {
 
     sealed interface Drawing : Action {
         /**
-         * Draw a line on the image.
+         * Draw a marker stroke on the current image.
+         *
+         * @param points The stroke points in current image coordinates
+         * @param color The stroke color
+         * @param strokeWidth The stroke width in image pixels
          */
-        data object Marker : Drawing
+        data class Marker(
+            val points: List<IntOffset>,
+            val color: Color = Color.Red,
+            val strokeWidth: Float = 12f,
+        ) : Drawing
 
         /**
          * Add a text label to the image.
