@@ -64,6 +64,19 @@ sealed interface Action {
         ) : Drawing
 
         /**
+         * Draw a translucent highlighter stroke on the current image.
+         *
+         * @param points The stroke points in current image coordinates
+         * @param color The translucent stroke color
+         * @param strokeWidth The stroke width in image pixels
+         */
+        data class Highlighter(
+            val points: List<IntOffset>,
+            val color: Color = Color.Yellow.copy(alpha = 0.4f),
+            val strokeWidth: Float = 32f,
+        ) : Drawing
+
+        /**
          * Add a text label to the image.
          *
          * @param text The text of the overlay

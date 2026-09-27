@@ -36,6 +36,7 @@ import org.lineageos.canvas.ui.composables.ImageInformation
 import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
 
 private const val MARKER_STROKE_WIDTH = 12f
+private const val HIGHLIGHTER_STROKE_WIDTH = 32f
 
 /**
  * Add marker strokes to the current image.
@@ -44,6 +45,54 @@ private const val MARKER_STROKE_WIDTH = 12f
 fun MarkerScreen(
     innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
+    onAddAction: (Action) -> Unit,
+    onCancel: () -> Unit,
+) = StrokeScreen(
+    innerPadding = innerPadding,
+    imageBitmap = imageBitmap,
+    color = Color.Red,
+    strokeWidth = MARKER_STROKE_WIDTH,
+    createAction = { points ->
+        Action.Drawing.Marker(
+            points = points,
+            strokeWidth = MARKER_STROKE_WIDTH,
+        )
+    },
+    onAddAction = onAddAction,
+    onCancel = onCancel,
+)
+
+/**
+ * Add highlighter strokes to the current image.
+ */
+@Composable
+fun HighlighterScreen(
+    innerPadding: PaddingValues,
+    imageBitmap: ImageBitmap,
+    onAddAction: (Action) -> Unit,
+    onCancel: () -> Unit,
+) = StrokeScreen(
+    innerPadding = innerPadding,
+    imageBitmap = imageBitmap,
+    color = Color.Yellow.copy(alpha = 0.4f),
+    strokeWidth = HIGHLIGHTER_STROKE_WIDTH,
+    createAction = { points ->
+        Action.Drawing.Highlighter(
+            points = points,
+            strokeWidth = HIGHLIGHTER_STROKE_WIDTH,
+        )
+    },
+    onAddAction = onAddAction,
+    onCancel = onCancel,
+)
+
+@Composable
+private fun StrokeScreen(
+    innerPadding: PaddingValues,
+    imageBitmap: ImageBitmap,
+    color: Color,
+    strokeWidth: Float,
+    createAction: (List<IntOffset>) -> Action,
     onAddAction: (Action) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -82,12 +131,7 @@ fun MarkerScreen(
                             },
                             onDragEnd = {
                                 if (isDrawing && imagePoints.isNotEmpty()) {
-                                    onAddAction(
-                                        Action.Drawing.Marker(
-                                            points = imagePoints.toList(),
-                                            strokeWidth = MARKER_STROKE_WIDTH,
-                                        )
-                                    )
+                                    onAddAction(createAction(imagePoints.toList()))
                                 }
                                 isDrawing = false
                                 previewPoints = emptyList()
@@ -112,13 +156,13 @@ fun MarkerScreen(
                     },
             ) {
                 val previewStrokeWidth = imageInformation?.let { info ->
-                    MARKER_STROKE_WIDTH *
+                    strokeWidth *
                         info.imageViewRect.width / info.bitmapSize.width
                 } ?: 8.dp.toPx()
 
                 if (previewPoints.size == 1) {
                     drawCircle(
-                        color = Color.Red,
+                        color = color,
                         radius = previewStrokeWidth / 2f,
                         center = previewPoints.first(),
                     )
@@ -131,7 +175,7 @@ fun MarkerScreen(
                     }
                     drawPath(
                         path = path,
-                        color = Color.Red,
+                        color = color,
                         style = Stroke(
                             width = previewStrokeWidth,
                             cap = StrokeCap.Round,

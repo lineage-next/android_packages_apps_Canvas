@@ -243,7 +243,17 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             is Action.Drawing -> when (action) {
-                is Action.Drawing.Marker -> drawMarker(action)
+                is Action.Drawing.Marker -> drawStroke(
+                    points = action.points,
+                    color = action.color,
+                    strokeWidth = action.strokeWidth,
+                )
+
+                is Action.Drawing.Highlighter -> drawStroke(
+                    points = action.points,
+                    color = action.color,
+                    strokeWidth = action.strokeWidth,
+                )
 
                 is Action.Drawing.Text -> {
                     val textMeasurer = TextMeasurer(
@@ -263,26 +273,29 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
 
-                is Action.Drawing.Eraser -> drawMarker(
-                    marker = action.marker,
+                is Action.Drawing.Eraser -> drawStroke(
+                    points = action.marker.points,
+                    color = action.marker.color,
+                    strokeWidth = action.marker.strokeWidth,
                     blendMode = BlendMode.Clear,
                 )
             }
         }
     }
 
-    private fun DrawScope.drawMarker(
-        marker: Action.Drawing.Marker,
+    private fun DrawScope.drawStroke(
+        points: List<androidx.compose.ui.unit.IntOffset>,
+        color: androidx.compose.ui.graphics.Color,
+        strokeWidth: Float,
         blendMode: BlendMode = BlendMode.SrcOver,
     ) {
-        val points = marker.points
         if (points.isEmpty()) return
 
         val firstPoint = points.first().toOffset()
         if (points.size == 1) {
             drawCircle(
-                color = marker.color,
-                radius = marker.strokeWidth / 2f,
+                color = color,
+                radius = strokeWidth / 2f,
                 center = firstPoint,
                 blendMode = blendMode,
             )
@@ -298,9 +311,9 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
         drawPath(
             path = path,
-            color = marker.color,
+            color = color,
             style = Stroke(
-                width = marker.strokeWidth,
+                width = strokeWidth,
                 cap = StrokeCap.Round,
                 join = StrokeJoin.Round,
             ),

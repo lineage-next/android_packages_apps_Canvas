@@ -21,6 +21,7 @@ import org.lineageos.canvas.models.EditMode
 import org.lineageos.canvas.ui.LocalSharedTransitionScope
 import org.lineageos.canvas.ui.screens.HomeScreen
 import org.lineageos.canvas.ui.screens.CropScreen
+import org.lineageos.canvas.ui.screens.HighlighterScreen
 import org.lineageos.canvas.ui.screens.MarkerScreen
 import org.lineageos.canvas.ui.screens.RotationScreen
 import org.lineageos.canvas.ui.screens.TextScreen
@@ -79,7 +80,12 @@ fun CanvasNavDisplay(
                     onCancel = navigationBackStack::removeLastOrNull,
                 )
 
-                EditMode.HIGHLIGHTER -> TODO()
+                EditMode.HIGHLIGHTER -> HighlighterScreen(
+                    innerPadding = innerPadding,
+                    imageBitmap = finalResultBitmap,
+                    onAddAction = onAddAction,
+                    onCancel = navigationBackStack::removeLastOrNull,
+                )
 
                 EditMode.TEXT -> TextScreen(
                     innerPadding = innerPadding,
