@@ -39,12 +39,12 @@ fun DrawScope.drawCropOverlay(rect: Rect, showHandles: Boolean, style: CropOverl
         color = if (showHandles) style.handleColor else style.borderColor,
         topLeft = Offset(rect.left, rect.top),
         size = Size(rect.width, rect.height),
-        style = Stroke(width = style.strokeWidth.value),
+        style = Stroke(width = style.strokeWidth.toPx()),
     )
 
     if (showHandles) {
         handleOffsets(rect).forEach { offset ->
-            drawCircle(style.handleColor, style.handleRadius.value, offset)
+            drawCircle(style.handleColor, style.handleRadius.toPx(), offset)
         }
     }
 }

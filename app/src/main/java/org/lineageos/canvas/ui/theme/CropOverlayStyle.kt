@@ -25,5 +25,5 @@ fun defaultCropOverlayStyle() = CropOverlayStyle(
     borderColor = Color.White.copy(alpha = 0.7f),
     handleColor = MaterialTheme.colorScheme.primary,
     strokeWidth = 4.dp,
-    handleRadius = 24.dp,
+    handleRadius = 10.dp,
 )

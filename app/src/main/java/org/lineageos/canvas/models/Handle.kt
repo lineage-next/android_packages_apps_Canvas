@@ -10,26 +10,31 @@ package org.lineageos.canvas.models
  *
  * @see [Action.Transformation.Crop]
  */
-enum class Handle {
+enum class Handle(
+    val movesLeft: Boolean = false,
+    val movesTop: Boolean = false,
+    val movesRight: Boolean = false,
+    val movesBottom: Boolean = false,
+) {
     /**
      * Top left corner.
      */
-    TOP_LEFT,
+    TOP_LEFT(movesLeft = true, movesTop = true),
 
     /**
      * Top center corner.
      */
-    TOP,
+    TOP(movesTop = true),
 
     /**
      * Top right corner.
      */
-    TOP_RIGHT,
+    TOP_RIGHT(movesTop = true, movesRight = true),
 
     /**
      * Left center corner.
      */
-    LEFT,
+    LEFT(movesLeft = true),
 
     /**
      * Center of the selection.
@@ -39,20 +44,20 @@ enum class Handle {
     /**
      * Right center corner.
      */
-    RIGHT,
+    RIGHT(movesRight = true),
 
     /**
      * Bottom left corner.
      */
-    BOTTOM_LEFT,
+    BOTTOM_LEFT(movesLeft = true, movesBottom = true),
 
     /**
      * Bottom center corner.
      */
-    BOTTOM,
+    BOTTOM(movesBottom = true),
 
     /**
      * Bottom right corner.
      */
-    BOTTOM_RIGHT,
+    BOTTOM_RIGHT(movesRight = true, movesBottom = true),
 }

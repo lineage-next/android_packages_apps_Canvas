@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,9 +37,7 @@ import org.lineageos.canvas.ui.composables.ImageInformation
 import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
 import org.lineageos.canvas.ui.theme.CropOverlayStyle
 import org.lineageos.canvas.ui.theme.defaultCropOverlayStyle
-import kotlin.math.abs
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CropScreen(
     imageBitmap: ImageBitmap,
@@ -53,11 +50,9 @@ fun CropScreen(
     var cropRect by remember { mutableStateOf<Rect?>(null) }
 
     LaunchedEffect(initialCropRect, imageInformation) {
-        imageInformation?.let { imageInformation ->
-            cropRect = initialCropRect?.let {
-                imageInformation.originalBitmapRectToViewRect(it)
-            }
-        }
+        val imageInfo = imageInformation ?: return@LaunchedEffect
+        cropRect = initialCropRect?.let(imageInfo::originalBitmapRectToViewRect)
+            ?: imageInfo.imageViewRect
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -81,7 +76,6 @@ fun CropScreen(
                     onCropRectChange = { rect ->
                         cropRect = rect
                     },
-                    onCropRectCommit = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -113,14 +107,16 @@ private fun CropOverlay(
     imageBounds: Rect,
     cropRect: Rect,
     onCropRectChange: (Rect) -> Unit,
-    onCropRectCommit: () -> Unit,
     modifier: Modifier = Modifier,
     style: CropOverlayStyle = defaultCropOverlayStyle(),
 ) {
     var activeHandle by remember { mutableStateOf<Handle?>(null) }
     val currentCropRect by rememberUpdatedState(cropRect)
 
-    val handleThresholdPx = with(LocalDensity.current) { 24.dp.toPx() }
+    val handleHitRadiusPx = with(LocalDensity.current) {
+        maxOf(style.handleRadius + 8.dp, 24.dp).toPx()
+    }
+    val minimumCropSizePx = with(LocalDensity.current) { 100.dp.toPx() }
 
     Canvas(
         modifier = modifier
@@ -128,12 +124,14 @@ private fun CropOverlay(
             .pointerInput(imageBounds) {
                 detectDragGestures(
                     onDragStart = { offset ->
-                        activeHandle =
-                            getHandleForOffset(offset, currentCropRect, handleThresholdPx)
+                        activeHandle = getHandleForOffset(
+                            offset = offset,
+                            rect = currentCropRect,
+                            hitRadius = handleHitRadiusPx,
+                        )
                     },
                     onDragEnd = {
                         activeHandle = null
-                        onCropRectCommit()
                     },
                     onDragCancel = {
                         activeHandle = null
@@ -148,6 +146,7 @@ private fun CropOverlay(
                             activeHandle,
                             dragAmount,
                             imageBounds,
+                            minimumCropSizePx,
                         )
                         onCropRectChange(newRect)
                     },
@@ -162,92 +161,92 @@ private fun CropOverlay(
     }
 }
 
-private fun updateRectWithDrag(rect: Rect, handle: Handle, drag: Offset, bounds: Rect): Rect {
-    val minWidth = minOf(100f, bounds.width, rect.width)
-    val minHeight = minOf(100f, bounds.height, rect.height)
+private fun updateRectWithDrag(
+    rect: Rect,
+    handle: Handle,
+    drag: Offset,
+    bounds: Rect,
+    requestedMinimumSize: Float,
+): Rect {
+    val minWidth = minOf(requestedMinimumSize, bounds.width)
+    val minHeight = minOf(requestedMinimumSize, bounds.height)
 
-    return when (handle) {
-        Handle.CENTER -> {
-            val width = rect.width
-            val height = rect.height
+    if (handle == Handle.CENTER) {
+        val width = rect.width.coerceIn(0f, bounds.width)
+        val height = rect.height.coerceIn(0f, bounds.height)
+        val maxLeft = maxOf(bounds.left, minOf(bounds.right, bounds.right - width))
+        val maxTop = maxOf(bounds.top, minOf(bounds.bottom, bounds.bottom - height))
+        val left = (rect.left + drag.x).coerceIn(bounds.left, maxLeft)
+        val top = (rect.top + drag.y).coerceIn(bounds.top, maxTop)
 
-            var newLeft = rect.left + drag.x
-            var newTop = rect.top + drag.y
-
-            newLeft = newLeft.coerceIn(bounds.left, bounds.right - width)
-            newTop = newTop.coerceIn(bounds.top, bounds.bottom - height)
-
-            rect.copy(
-                left = newLeft,
-                top = newTop,
-                right = newLeft + width,
-                bottom = newTop + height
-            )
-        }
-
-        Handle.TOP -> rect.copy(
-            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minHeight),
-        )
-
-        Handle.BOTTOM -> rect.copy(
-            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minHeight, bounds.bottom),
-        )
-
-        Handle.LEFT -> rect.copy(
-            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minWidth),
-        )
-
-        Handle.RIGHT -> rect.copy(
-            right = (rect.right + drag.x).coerceIn(rect.left + minWidth, bounds.right),
-        )
-
-        Handle.TOP_LEFT -> rect.copy(
-            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minHeight),
-            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minWidth),
-        )
-
-        Handle.TOP_RIGHT -> rect.copy(
-            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minHeight),
-            right = (rect.right + drag.x).coerceIn(rect.left + minWidth, bounds.right),
-        )
-
-        Handle.BOTTOM_LEFT -> rect.copy(
-            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minHeight, bounds.bottom),
-            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minWidth),
-        )
-
-        Handle.BOTTOM_RIGHT -> rect.copy(
-            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minHeight, bounds.bottom),
-            right = (rect.right + drag.x).coerceIn(rect.left + minWidth, bounds.right),
+        return Rect(
+            left = left,
+            top = top,
+            right = minOf(bounds.right, left + width),
+            bottom = minOf(bounds.bottom, top + height),
         )
     }
+
+    val left = if (handle.movesLeft) {
+        (rect.left + drag.x).coerceIn(
+            bounds.left,
+            maxOf(bounds.left, minOf(bounds.right, rect.right - minWidth)),
+        )
+    } else {
+        rect.left
+    }
+    val right = if (handle.movesRight) {
+        (rect.right + drag.x).coerceIn(
+            minOf(bounds.right, maxOf(bounds.left, rect.left + minWidth)),
+            bounds.right,
+        )
+    } else {
+        rect.right
+    }
+    val top = if (handle.movesTop) {
+        (rect.top + drag.y).coerceIn(
+            bounds.top,
+            maxOf(bounds.top, minOf(bounds.bottom, rect.bottom - minHeight)),
+        )
+    } else {
+        rect.top
+    }
+    val bottom = if (handle.movesBottom) {
+        (rect.bottom + drag.y).coerceIn(
+            minOf(bounds.bottom, maxOf(bounds.top, rect.top + minHeight)),
+            bounds.bottom,
+        )
+    } else {
+        rect.bottom
+    }
+
+    return Rect(left, top, right, bottom)
 }
 
-private fun getHandleForOffset(offset: Offset, rect: Rect, threshold: Float): Handle? {
-    val x = offset.x
-    val y = offset.y
-
-    // Corner check
-    val isTop = abs(y - rect.top) < threshold
-    val isBottom = abs(y - rect.bottom) < threshold
-    val isLeft = abs(x - rect.left) < threshold
-    val isRight = abs(x - rect.right) < threshold
-
-    return when {
-        isTop && isLeft -> Handle.TOP_LEFT
-        isTop && isRight -> Handle.TOP_RIGHT
-        isBottom && isLeft -> Handle.BOTTOM_LEFT
-        isBottom && isRight -> Handle.BOTTOM_RIGHT
-
-        // Edge check
-        isTop && x in (rect.left..rect.right) -> Handle.TOP
-        isBottom && x in (rect.left..rect.right) -> Handle.BOTTOM
-        isLeft && y in (rect.top..rect.bottom) -> Handle.LEFT
-        isRight && y in (rect.top..rect.bottom) -> Handle.RIGHT
-
-        // Rect check
-        rect.contains(offset) -> Handle.CENTER
-
-        else -> null
+private fun getHandleForOffset(offset: Offset, rect: Rect, hitRadius: Float): Handle? {
+    val handles = listOf(
+        Handle.TOP_LEFT to Offset(rect.left, rect.top),
+        Handle.TOP to Offset(rect.center.x, rect.top),
+        Handle.TOP_RIGHT to Offset(rect.right, rect.top),
+        Handle.LEFT to Offset(rect.left, rect.center.y),
+        Handle.RIGHT to Offset(rect.right, rect.center.y),
+        Handle.BOTTOM_LEFT to Offset(rect.left, rect.bottom),
+        Handle.BOTTOM to Offset(rect.center.x, rect.bottom),
+        Handle.BOTTOM_RIGHT to Offset(rect.right, rect.bottom),
+    )
+    val hitRadiusSquared = hitRadius * hitRadius
+    val closestHandle = handles.minByOrNull { (_, position) ->
+        val dx = offset.x - position.x
+        val dy = offset.y - position.y
+        dx * dx + dy * dy
     }
+
+    if (closestHandle != null) {
+        val (handle, position) = closestHandle
+        val dx = offset.x - position.x
+        val dy = offset.y - position.y
+        if (dx * dx + dy * dy <= hitRadiusSquared) return handle
+    }
+
+    return Handle.CENTER.takeIf { rect.contains(offset) }
 }
