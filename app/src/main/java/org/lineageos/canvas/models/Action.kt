@@ -81,7 +81,7 @@ sealed interface Action {
          *
          * @param text The text of the overlay
          * @param position The position in the image produced by preceding actions
-         * @param style The text style
+         * @param style The text style, with font size stored in image pixels
          */
         data class Text(
             val text: String,

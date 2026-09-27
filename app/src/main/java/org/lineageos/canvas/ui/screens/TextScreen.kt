@@ -22,9 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.sp
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.ui.composables.CanvasImage
 import org.lineageos.canvas.ui.composables.ImageInformation
@@ -45,6 +47,7 @@ fun TextScreen(
 
     var imageInformation by remember { mutableStateOf<ImageInformation?>(null) }
     var pendingActions by remember { mutableStateOf(emptyList<Action.Drawing.Text>()) }
+    val density = LocalDensity.current
 
     BackHandler(enabled = textEditorPosition != null) {
         textEditorPosition = null
@@ -75,19 +78,27 @@ fun TextScreen(
                     },
             ) { imageInformation = it }
 
-            imageInformation?.let { imageInfo ->
+            val imageInfo = imageInformation
+            val imagePixelsPerSp = imageInfo?.let {
+                density.density * density.fontScale *
+                    it.bitmapSize.width / it.imageViewRect.width
+            } ?: 1f
+
+            imageInfo?.let { imageInfo ->
                 pendingActions.forEach { action ->
                     Text(
                         text = action.text,
                         modifier = Modifier.offset {
                             imageInfo.bitmapOffsetToView(action.position).round()
                         },
-                        style = action.style,
+                        style = action.style.copy(
+                            fontSize = (action.style.fontSize.value / imagePixelsPerSp).sp,
+                        ),
                     )
                 }
             }
 
-            textEditorPosition?.let {
+            textEditorPosition?.let { position ->
                 TextEditorOverlay(
                     onDismiss = {
                         textEditorPosition = null
@@ -95,8 +106,10 @@ fun TextScreen(
                     onConfirm = { text, textStyle ->
                         val action = Action.Drawing.Text(
                             text = text,
-                            position = it,
-                            style = textStyle,
+                            position = position,
+                            style = textStyle.copy(
+                                fontSize = (textStyle.fontSize.value * imagePixelsPerSp).sp,
+                            ),
                         )
 
                         pendingActions = pendingActions + action
