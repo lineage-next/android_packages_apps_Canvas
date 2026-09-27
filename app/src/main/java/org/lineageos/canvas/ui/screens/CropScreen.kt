@@ -163,7 +163,8 @@ private fun CropOverlay(
 }
 
 private fun updateRectWithDrag(rect: Rect, handle: Handle, drag: Offset, bounds: Rect): Rect {
-    val minSize = 100f
+    val minWidth = minOf(100f, bounds.width, rect.width)
+    val minHeight = minOf(100f, bounds.height, rect.height)
 
     return when (handle) {
         Handle.CENTER -> {
@@ -185,39 +186,39 @@ private fun updateRectWithDrag(rect: Rect, handle: Handle, drag: Offset, bounds:
         }
 
         Handle.TOP -> rect.copy(
-            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minSize),
+            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minHeight),
         )
 
         Handle.BOTTOM -> rect.copy(
-            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minSize, bounds.bottom),
+            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minHeight, bounds.bottom),
         )
 
         Handle.LEFT -> rect.copy(
-            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minSize),
+            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minWidth),
         )
 
         Handle.RIGHT -> rect.copy(
-            right = (rect.right + drag.x).coerceIn(rect.left + minSize, bounds.right),
+            right = (rect.right + drag.x).coerceIn(rect.left + minWidth, bounds.right),
         )
 
         Handle.TOP_LEFT -> rect.copy(
-            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minSize),
-            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minSize),
+            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minHeight),
+            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minWidth),
         )
 
         Handle.TOP_RIGHT -> rect.copy(
-            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minSize),
-            right = (rect.right + drag.x).coerceIn(rect.left + minSize, bounds.right),
+            top = (rect.top + drag.y).coerceIn(bounds.top, rect.bottom - minHeight),
+            right = (rect.right + drag.x).coerceIn(rect.left + minWidth, bounds.right),
         )
 
         Handle.BOTTOM_LEFT -> rect.copy(
-            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minSize, bounds.bottom),
-            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minSize),
+            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minHeight, bounds.bottom),
+            left = (rect.left + drag.x).coerceIn(bounds.left, rect.right - minWidth),
         )
 
         Handle.BOTTOM_RIGHT -> rect.copy(
-            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minSize, bounds.bottom),
-            right = (rect.right + drag.x).coerceIn(rect.left + minSize, bounds.right),
+            bottom = (rect.bottom + drag.y).coerceIn(rect.top + minHeight, bounds.bottom),
+            right = (rect.right + drag.x).coerceIn(rect.left + minWidth, bounds.right),
         )
     }
 }
