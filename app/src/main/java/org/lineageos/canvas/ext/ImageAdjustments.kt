@@ -25,6 +25,20 @@ fun brightnessColorFilter(value: Float): ColorFilter = ColorFilter.colorMatrix(
     ),
 )
 
+fun contrastColorFilter(value: Float): ColorFilter {
+    val offset = 0.5f * (1f - value) * 255f
+    return ColorFilter.colorMatrix(
+        ColorMatrix(
+            floatArrayOf(
+                value, 0f, 0f, 0f, offset,
+                0f, value, 0f, 0f, offset,
+                0f, 0f, value, 0f, offset,
+                0f, 0f, 0f, 1f, 0f,
+            ),
+        ),
+    )
+}
+
 fun ImageBitmap.adjustBrightness(value: Float): ImageBitmap {
     if (value == 0f) return this
 
@@ -45,6 +59,32 @@ fun ImageBitmap.adjustBrightness(value: Float): ImageBitmap {
         drawImage(
             image = this@adjustBrightness,
             colorFilter = brightnessColorFilter(value),
+        )
+    }
+
+    return output
+}
+
+fun ImageBitmap.adjustContrast(value: Float): ImageBitmap {
+    if (value == 1f) return this
+
+    val output = ImageBitmap(
+        width = width,
+        height = height,
+        config = config,
+        hasAlpha = hasAlpha,
+        colorSpace = colorSpace,
+    )
+
+    CanvasDrawScope().draw(
+        density = Density(1f),
+        layoutDirection = LayoutDirection.Ltr,
+        canvas = Canvas(output),
+        size = Size(width.toFloat(), height.toFloat()),
+    ) {
+        drawImage(
+            image = this@adjustContrast,
+            colorFilter = contrastColorFilter(value),
         )
     }
 

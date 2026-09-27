@@ -22,6 +22,7 @@ import org.lineageos.canvas.ui.LocalSharedTransitionScope
 import org.lineageos.canvas.ui.screens.HomeScreen
 import org.lineageos.canvas.ui.screens.CropScreen
 import org.lineageos.canvas.ui.screens.BrightnessScreen
+import org.lineageos.canvas.ui.screens.ContrastScreen
 import org.lineageos.canvas.ui.screens.HighlighterScreen
 import org.lineageos.canvas.ui.screens.MarkerScreen
 import org.lineageos.canvas.ui.screens.RotationScreen
@@ -107,7 +108,16 @@ fun CanvasNavDisplay(
                     onCancel = navigationBackStack::removeLastOrNull,
                 )
 
-                EditMode.CONTRAST -> TODO()
+                EditMode.CONTRAST -> ContrastScreen(
+                    innerPadding = innerPadding,
+                    imageBitmap = bitmapWithOverlayActions,
+                    cropRect = cropRect,
+                    onConfirm = { action ->
+                        action?.let(onAddAction)
+                        navigationBackStack.removeLastOrNull()
+                    },
+                    onCancel = navigationBackStack::removeLastOrNull,
+                )
             }
         }
     }
