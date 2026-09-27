@@ -14,17 +14,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
-import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FormatAlignCenter
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatStrikethrough
@@ -38,7 +34,6 @@ import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,7 +46,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -59,7 +53,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.lineageos.canvas.R
@@ -73,7 +66,6 @@ fun TextEditorOverlay(
     val textFieldState = rememberTextFieldState()
 
     var fontFamily by remember { mutableStateOf(FontFamily.Default) }
-    var textAlignment by remember { mutableStateOf(TextAlign.Center) }
     var textColor by remember { mutableStateOf(Color.White) }
     var bold by remember { mutableStateOf(false) }
     var italic by remember { mutableStateOf(false) }
@@ -81,8 +73,6 @@ fun TextEditorOverlay(
     var strikethrough by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
-
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -106,7 +96,7 @@ fun TextEditorOverlay(
             strikethrough -> TextDecoration.LineThrough
             else -> TextDecoration.None
         },
-        textAlign = textAlignment,
+        textAlign = TextAlign.Center
     )
 
     Column(
@@ -173,35 +163,6 @@ fun TextEditorOverlay(
                 checked = strikethrough,
                 contentDescription = R.string.text_decoration_strikethrough,
             ) { strikethrough = it }
-
-            TextPropertiesDivider()
-
-            TextAlignmentButton(
-                imageVector = Icons.AutoMirrored.Filled.FormatAlignLeft,
-                value = when (isRtl) {
-                    true -> TextAlign.Right
-                    false -> TextAlign.Left
-                },
-                currentValue = textAlignment,
-                contentDescription = R.string.text_alignment_left,
-            ) { textAlignment = it }
-
-            TextAlignmentButton(
-                imageVector = Icons.Default.FormatAlignCenter,
-                value = TextAlign.Center,
-                currentValue = textAlignment,
-                contentDescription = R.string.text_alignment_center,
-            ) { textAlignment = it }
-
-            TextAlignmentButton(
-                imageVector = Icons.AutoMirrored.Filled.FormatAlignRight,
-                value = when (isRtl) {
-                    true -> TextAlign.Left
-                    false -> TextAlign.Right
-                },
-                currentValue = textAlignment,
-                contentDescription = R.string.text_alignment_right,
-            ) { textAlignment = it }
         }
 
         TextPropertiesRow {
@@ -258,6 +219,7 @@ private fun TextPropertiesRow(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(modifier = Modifier.width(16.dp))
@@ -285,32 +247,6 @@ private fun TextPropertyButton(
             contentDescription = stringResource(contentDescription),
         )
     }
-}
-
-@Composable
-private fun TextAlignmentButton(
-    imageVector: ImageVector,
-    value: TextAlign,
-    currentValue: TextAlign,
-    @StringRes contentDescription: Int,
-    onCheckedChange: (TextAlign) -> Unit,
-) {
-    TextPropertyButton(
-        imageVector = imageVector,
-        checked = currentValue == value,
-        contentDescription = contentDescription,
-        onCheckedChange = { onCheckedChange(value) }
-    )
-}
-
-@Composable
-private fun TextPropertiesDivider() {
-    VerticalDivider(
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .height(32.dp),
-        thickness = 2.dp,
-    )
 }
 
 @Composable
