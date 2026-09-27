@@ -8,7 +8,7 @@
 android_library_import {
     name: "Canvas_com.google.accompanist_accompanist-drawablepainter",
     aars: ["com/google/accompanist/accompanist-drawablepainter/0.37.3/accompanist-drawablepainter-0.37.3.aar"],
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -23,7 +23,7 @@ android_library_import {
 
 java_library_static {
     name: "Canvas_com.squareup.okio_okio",
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -37,7 +37,7 @@ java_library_static {
 java_import {
     name: "Canvas_com.squareup.okio_okio-jvm",
     jars: ["com/squareup/okio/okio-jvm/3.17.0/okio-jvm-3.17.0.jar"],
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -50,7 +50,7 @@ java_import {
 
 java_library_static {
     name: "Canvas_io.coil-kt.coil3_coil",
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -64,7 +64,7 @@ java_library_static {
 android_library_import {
     name: "Canvas_io.coil-kt.coil3_coil-android",
     aars: ["io/coil-kt/coil3/coil-android/3.5.0/coil.aar"],
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -78,7 +78,7 @@ android_library_import {
 
 java_library_static {
     name: "Canvas_io.coil-kt.coil3_coil-compose",
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -92,7 +92,7 @@ java_library_static {
 android_library_import {
     name: "Canvas_io.coil-kt.coil3_coil-compose-android",
     aars: ["io/coil-kt/coil3/coil-compose-android/3.5.0/coil-compose.aar"],
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -107,7 +107,7 @@ android_library_import {
 
 java_library_static {
     name: "Canvas_io.coil-kt.coil3_coil-compose-core",
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -121,7 +121,7 @@ java_library_static {
 android_library_import {
     name: "Canvas_io.coil-kt.coil3_coil-compose-core-android",
     aars: ["io/coil-kt/coil3/coil-compose-core-android/3.5.0/coil-compose-core.aar"],
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -137,7 +137,7 @@ android_library_import {
 
 java_library_static {
     name: "Canvas_io.coil-kt.coil3_coil-core",
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
@@ -151,7 +151,7 @@ java_library_static {
 android_library_import {
     name: "Canvas_io.coil-kt.coil3_coil-core-android",
     aars: ["io/coil-kt/coil3/coil-core-android/3.5.0/coil-core.aar"],
-    sdk_version: "36",
+    sdk_version: "37",
     min_sdk_version: "36",
     apex_available: [
         "//apex_available:platform",
