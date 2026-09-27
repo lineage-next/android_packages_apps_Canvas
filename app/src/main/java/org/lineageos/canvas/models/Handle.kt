@@ -6,9 +6,9 @@
 package org.lineageos.canvas.models
 
 /**
- * [Action.Resize] handles.
+ * Crop handles.
  *
- * @see [Action.Resize]
+ * @see [Action.Transformation.Crop]
  */
 enum class Handle {
     /**

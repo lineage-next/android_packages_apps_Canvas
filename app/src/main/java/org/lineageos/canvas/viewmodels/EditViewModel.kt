@@ -140,11 +140,11 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         actions,
         sourceBitmap,
     ) { actions, sourceBitmap ->
-        val lastResize = actions.lastOrNull {
-            it is Action.Transformation.Resize
-        } as? Action.Transformation.Resize
+        val lastCrop = actions.lastOrNull {
+            it is Action.Transformation.Crop
+        } as? Action.Transformation.Crop
 
-        lastResize?.sourceRect ?: sourceBitmap?.size?.toIntRect()
+        lastCrop?.sourceRect ?: sourceBitmap?.size?.toIntRect()
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -268,7 +268,7 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             is Action.Transformation -> when (action) {
-                is Action.Transformation.Resize -> {
+                is Action.Transformation.Crop -> {
                     // Handled in another place
                 }
             }

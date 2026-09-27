@@ -10,9 +10,9 @@ package org.lineageos.canvas.models
  */
 enum class EditMode(val category: Category) {
     /**
-     * Image resize.
+     * Crop the image.
      */
-    RESIZE(Category.TRANSFORMATION),
+    CROP(Category.TRANSFORMATION),
 
     /**
      * Image rotation.

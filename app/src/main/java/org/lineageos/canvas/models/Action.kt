@@ -38,11 +38,9 @@ sealed interface Action {
      */
     sealed interface Transformation : Action {
         /**
-         * Resize the image to the given rectangle.
-         *
-         * @param sourceRect The rectangle to crop in untouched source-image coordinates
+         * Crop the image to a rectangle in untouched source-image coordinates.
          */
-        data class Resize(val sourceRect: IntRect) : Transformation
+        data class Crop(val sourceRect: IntRect) : Transformation
     }
 
     sealed interface Drawing : Action {

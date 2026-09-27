@@ -246,7 +246,7 @@ fun EditModeButton(
     ) {
         Icon(
             imageVector = when (editMode) {
-                EditMode.RESIZE -> Icons.Filled.Crop
+                EditMode.CROP -> Icons.Filled.Crop
                 EditMode.ROTATION -> Icons.Filled.CropRotate
                 EditMode.MARKER -> Icons.Filled.Draw
                 EditMode.HIGHLIGHTER -> Icons.Filled.Draw
@@ -255,7 +255,7 @@ fun EditModeButton(
                 EditMode.CONTRAST -> Icons.Filled.Contrast
             },
             contentDescription = when (editMode) {
-                EditMode.RESIZE -> R.string.edit_mode_resize
+                EditMode.CROP -> R.string.edit_mode_crop
                 EditMode.ROTATION -> R.string.edit_mode_rotation
                 EditMode.MARKER -> R.string.edit_mode_marker
                 EditMode.HIGHLIGHTER -> R.string.edit_mode_highlighter

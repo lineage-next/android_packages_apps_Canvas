@@ -68,13 +68,13 @@ fun CanvasTopAppBar(
                 is Screen.Home -> null
 
                 is Screen.Edit -> when (currentScreen.editMode) {
-                    EditMode.RESIZE -> R.string.edit_mode_resize
-                    EditMode.ROTATION -> R.string.edit_mode_resize
-                    EditMode.MARKER -> R.string.edit_mode_resize
-                    EditMode.HIGHLIGHTER -> R.string.edit_mode_resize
+                    EditMode.CROP -> R.string.edit_mode_crop
+                    EditMode.ROTATION -> R.string.edit_mode_rotation
+                    EditMode.MARKER -> R.string.edit_mode_marker
+                    EditMode.HIGHLIGHTER -> R.string.edit_mode_highlighter
                     EditMode.TEXT -> R.string.edit_mode_text
-                    EditMode.BRIGHTNESS -> R.string.edit_mode_resize
-                    EditMode.CONTRAST -> R.string.edit_mode_resize
+                    EditMode.BRIGHTNESS -> R.string.edit_mode_brightness
+                    EditMode.CONTRAST -> R.string.edit_mode_contrast
                 }
             }?.let {
                 Text(text = stringResource(it))

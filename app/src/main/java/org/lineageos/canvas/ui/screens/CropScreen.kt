@@ -44,7 +44,7 @@ import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResizeScreen(
+fun CropScreen(
     innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     initialCropRect: IntRect?,
@@ -80,7 +80,7 @@ fun ResizeScreen(
             ) { imageInformation = it }
 
             imageInformation?.let { imageInformation ->
-                ResizeOverlay(
+                CropOverlay(
                     imageBounds = imageInformation.imageViewRect,
                     cropRect = cropRect ?: return@let,
                     onCropRectChange = { rect ->
@@ -100,7 +100,7 @@ fun ResizeScreen(
                             cropRect
                         )
 
-                        val action = Action.Transformation.Resize(
+                        val action = Action.Transformation.Crop(
                             sourceRect = originalImageCropRect,
                         )
 
@@ -114,7 +114,7 @@ fun ResizeScreen(
 }
 
 @Composable
-private fun ResizeOverlay(
+private fun CropOverlay(
     imageBounds: Rect,
     cropRect: Rect,
     onCropRectChange: (Rect) -> Unit,

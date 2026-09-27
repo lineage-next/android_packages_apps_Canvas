@@ -20,7 +20,7 @@ import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.EditMode
 import org.lineageos.canvas.ui.LocalSharedTransitionScope
 import org.lineageos.canvas.ui.screens.HomeScreen
-import org.lineageos.canvas.ui.screens.ResizeScreen
+import org.lineageos.canvas.ui.screens.CropScreen
 import org.lineageos.canvas.ui.screens.TextScreen
 
 @Composable
@@ -48,7 +48,7 @@ fun CanvasNavDisplay(
 
         entry<Screen.Edit> {
             when (it.editMode) {
-                EditMode.RESIZE -> ResizeScreen(
+                EditMode.CROP -> CropScreen(
                     innerPadding = innerPadding,
                     imageBitmap = bitmapWithOverlayActions,
                     initialCropRect = cropRect,
