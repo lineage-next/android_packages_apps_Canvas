@@ -5,6 +5,7 @@
 
 package org.lineageos.canvas
 
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -19,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.util.Consumer
 import org.lineageos.canvas.models.EditStatus
+import org.lineageos.canvas.models.ImageFormat
 import org.lineageos.canvas.ui.CanvasApp
 import org.lineageos.canvas.ui.theme.CanvasTheme
 import org.lineageos.canvas.viewmodels.EditViewModel
@@ -31,6 +33,18 @@ class MainActivity : ComponentActivity() {
 
     private val onNewIntentListener = Consumer<Intent> { intent ->
         val uri = intent.takeIf { it.action == Intent.ACTION_EDIT }?.data ?: run {
+            finish()
+            return@Consumer
+        }
+
+        val mimeType = contentResolver.getType(uri)
+        val supportedMimeTypes = listOf(
+            ImageFormat.JPEG.mimeType,
+            ImageFormat.PNG.mimeType,
+            ImageFormat.WEBP.mimeType,
+        )
+
+        if (supportedMimeTypes.none { it == mimeType }) {
             finish()
             return@Consumer
         }
@@ -50,7 +64,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val saveStatus by resultOpsViewModel.saveStatus.collectAsState()
-            val mimeType by resultOpsViewModel.mimeType.collectAsState()
+            val image by resultOpsViewModel.image.collectAsState()
 
             LaunchedEffect(saveStatus) {
                 when (val status = saveStatus) {
@@ -61,26 +75,38 @@ class MainActivity : ComponentActivity() {
 
                     is EditStatus.Shared -> {
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = mimeType ?: "image/png"
+                            type = status.mimeType
                             putExtra(Intent.EXTRA_STREAM, status.uri)
+                            clipData = ClipData.newUri(
+                                contentResolver,
+                                getString(R.string.app_name),
+                                status.uri,
+                            )
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        startActivity(Intent.createChooser(shareIntent, null))
+                        startActivity(Intent.createChooser(shareIntent, getString(R.string.share)))
                     }
 
                     else -> {}
                 }
             }
 
-            val createDocumentLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.CreateDocument(mimeType ?: "image/png")
-            ) { uri: Uri? ->
+            val onDocumentCreated: (Uri?, ImageFormat) -> Unit = { uri, format ->
                 uri?.let { uri ->
                     editViewModel.finalResultBitmap.value?.let {
-                        resultOpsViewModel.saveImageToUri(it, uri)
+                        resultOpsViewModel.saveImageToUri(it, uri, format)
                     }
                 }
             }
+            val createJpegDocumentLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.CreateDocument(ImageFormat.JPEG.mimeType),
+            ) { uri -> onDocumentCreated(uri, ImageFormat.JPEG) }
+            val createPngDocumentLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.CreateDocument(ImageFormat.PNG.mimeType),
+            ) { uri -> onDocumentCreated(uri, ImageFormat.PNG) }
+            val createWebpDocumentLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.CreateDocument(ImageFormat.WEBP.mimeType),
+            ) { uri -> onDocumentCreated(uri, ImageFormat.WEBP) }
 
             CanvasTheme {
                 CanvasApp(
@@ -95,7 +121,14 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     onSaveAs = {
-                        createDocumentLauncher.launch(resultOpsViewModel.suggestedFilename)
+                        image?.format?.let {
+                            val fileName = resultOpsViewModel.suggestedFilename(it)
+                            when (it) {
+                                ImageFormat.JPEG -> createJpegDocumentLauncher.launch(fileName)
+                                ImageFormat.PNG -> createPngDocumentLauncher.launch(fileName)
+                                ImageFormat.WEBP -> createWebpDocumentLauncher.launch(fileName)
+                            }
+                        }
                     },
                     onShare = {
                         editViewModel.finalResultBitmap.value?.let {

@@ -17,6 +17,6 @@ sealed class EditStatus {
 
     // Operation completed
     object Saved : EditStatus()
-    data class Shared(val uri: Uri) : EditStatus()
+    data class Shared(val uri: Uri, val mimeType: String) : EditStatus()
     data class Error(val message: String) : EditStatus()
 }
