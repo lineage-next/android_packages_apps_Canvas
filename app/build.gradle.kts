@@ -74,9 +74,7 @@ generateBp {
     versionName = android.defaultConfig.versionName!!
     availableInAOSP = { module ->
         when {
-            module.group.startsWith("androidx") -> {
-                module.group != "androidx.navigation3"
-            }
+            module.group.startsWith("androidx") -> true
             module.group.startsWith("org.jetbrains") -> true
             module.group == "com.google.android.material" -> true
             module.group == "com.google.guava" -> true
