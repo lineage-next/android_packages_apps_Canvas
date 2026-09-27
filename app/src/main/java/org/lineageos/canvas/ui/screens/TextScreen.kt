@@ -82,7 +82,7 @@ fun TextScreen(
                     onConfirm = { text, textStyle ->
                         val action = Action.Drawing.Text(
                             text = text,
-                            sourcePosition = it,
+                            position = it,
                             style = textStyle,
                         )
 

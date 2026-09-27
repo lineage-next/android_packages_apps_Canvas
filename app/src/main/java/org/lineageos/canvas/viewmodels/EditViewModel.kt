@@ -134,58 +134,25 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     /**
-     * Last applied crop action rectangle.
+     * Bitmap rendered by replaying all active actions in order. Crop and drawing geometry is
+     * relative to the image state at the point where each action appears.
      */
-    val cropRect = combine(
-        actions,
-        sourceBitmap,
-    ) { actions, sourceBitmap ->
-        val lastCrop = actions.lastOrNull {
-            it is Action.Transformation.Crop
-        } as? Action.Transformation.Crop
-
-        lastCrop?.sourceRect ?: sourceBitmap?.size?.toIntRect()
-    }
-        .flowOn(Dispatchers.IO)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = null,
-        )
-
-    /**
-     * Source bitmap with [Action.Adjustment]s applied.
-     */
-    val sourceBitmapWithAdjustments = combine(
+    val adjustedBitmapWithActions = combine(
         sourceBitmap,
         actions,
     ) { sourceBitmap, actions ->
         val sourceBitmap = sourceBitmap ?: return@combine null
 
-        val adjustmentActions = actions.filterIsInstance<Action.Adjustment>().ifEmpty {
-            return@combine sourceBitmap
-        }
+        actions.fold(sourceBitmap) { currentBitmap, action ->
+            when (action) {
+                is Action.Adjustment -> currentBitmap // TODO: Apply the adjustment
 
-        // TODO: Apply them
+                is Action.Transformation.Crop -> currentBitmap.crop(action.rect)
 
-        sourceBitmap
-    }
-
-    /**
-     * Source bitmap with [Action.Adjustment]s applied and [Action.Drawing]s applied, used by the
-     * resize screen.
-     */
-    val adjustedBitmapWithActions = combine(
-        sourceBitmapWithAdjustments,
-        actions,
-    ) { sourceBitmapWithAdjustments, actions ->
-        val sourceBitmapWithAdjustments = sourceBitmapWithAdjustments ?: return@combine null
-
-        sourceBitmapWithAdjustments.createEmptyBitmap().draw {
-            drawImage(sourceBitmapWithAdjustments)
-
-            actions.forEach { action ->
-                drawAction(action)
+                is Action.Drawing -> currentBitmap.createEmptyBitmap().draw {
+                    drawImage(currentBitmap)
+                    drawAction(action)
+                }
             }
         }
     }
@@ -199,23 +166,13 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * The final result.
      */
-    val finalResultBitmap = combine(
-        adjustedBitmapWithActions,
-        cropRect,
-    ) { adjustedBitmapWithActions, cropRect ->
-        val adjustedBitmapWithActions = adjustedBitmapWithActions ?: return@combine null
-        val cropRect = cropRect ?: adjustedBitmapWithActions.size.toIntRect()
+    val finalResultBitmap = adjustedBitmapWithActions
 
-        adjustedBitmapWithActions.createEmptyBitmap(
-            width = cropRect.width,
-            height = cropRect.height,
-        ).draw {
-            drawImage(
-                image = adjustedBitmapWithActions,
-                srcOffset = cropRect.topLeft,
-                srcSize = cropRect.size,
-            )
-        }
+    /**
+     * Bounds of the currently rendered image, used to map view coordinates to image coordinates.
+     */
+    val cropRect = adjustedBitmapWithActions.mapLatest { bitmap ->
+        bitmap?.size?.toIntRect()
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -259,17 +216,17 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         when (action) {
             is Action.Adjustment -> when (action) {
                 is Action.Adjustment.Brightness -> {
-                    // Handled in another place
+                    // Handled by the action replay pipeline
                 }
 
                 is Action.Adjustment.Contrast -> {
-                    // Handled in another place
+                    // Handled by the action replay pipeline
                 }
             }
 
             is Action.Transformation -> when (action) {
                 is Action.Transformation.Crop -> {
-                    // Handled in another place
+                    // Handled by the action replay pipeline
                 }
             }
 
@@ -285,8 +242,8 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
                         textMeasurer = textMeasurer,
                         text = action.text,
                         topLeft = Offset(
-                            action.sourcePosition.x.toFloat(),
-                            action.sourcePosition.y.toFloat(),
+                            action.position.x.toFloat(),
+                            action.position.y.toFloat(),
                         ),
                         style = action.style,
                     )
@@ -341,4 +298,26 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         hasAlpha = hasAlpha,
         colorSpace = colorSpace,
     )
+
+    /**
+     * Create a cropped bitmap. The rectangle is clipped to this bitmap's bounds.
+     */
+    private fun ImageBitmap.crop(rect: androidx.compose.ui.unit.IntRect): ImageBitmap {
+        val left = rect.left.coerceIn(0, width - 1)
+        val top = rect.top.coerceIn(0, height - 1)
+        val right = rect.right.coerceIn(left + 1, width)
+        val bottom = rect.bottom.coerceIn(top + 1, height)
+        val source = this
+
+        return createEmptyBitmap(
+            width = right - left,
+            height = bottom - top,
+        ).draw {
+            drawImage(
+                image = source,
+                srcOffset = androidx.compose.ui.unit.IntOffset(left, top),
+                srcSize = androidx.compose.ui.unit.IntSize(right - left, bottom - top),
+            )
+        }
+    }
 }

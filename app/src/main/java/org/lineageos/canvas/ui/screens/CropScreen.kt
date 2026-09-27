@@ -101,7 +101,7 @@ fun CropScreen(
                         )
 
                         val action = Action.Transformation.Crop(
-                            sourceRect = originalImageCropRect,
+                            rect = originalImageCropRect,
                         )
 
                         onConfirm(action)

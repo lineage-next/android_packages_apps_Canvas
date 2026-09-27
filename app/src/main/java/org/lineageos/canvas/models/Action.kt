@@ -10,12 +10,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 
 /**
- * An action to apply to an image. Geometric values use the untouched source image as their
- * canonical coordinate space, even when the user edits a cropped preview.
+ * An action to apply to an image. Geometric values use coordinates in the image produced by all
+ * preceding actions.
  */
 sealed interface Action {
     /**
-     * Adjustments applied to the whole source image, not to the [Drawing] actions
+     * Adjustments applied to the image state at their position in the action history.
      */
     sealed interface Adjustment : Action {
         /**
@@ -38,9 +38,9 @@ sealed interface Action {
      */
     sealed interface Transformation : Action {
         /**
-         * Crop the image to a rectangle in untouched source-image coordinates.
+         * Crop the current image to a rectangle in its current coordinates.
          */
-        data class Crop(val sourceRect: IntRect) : Transformation
+        data class Crop(val rect: IntRect) : Transformation
     }
 
     sealed interface Drawing : Action {
@@ -53,12 +53,12 @@ sealed interface Action {
          * Add a text label to the image.
          *
          * @param text The text of the overlay
-         * @param sourcePosition The position in untouched source-image coordinates
+         * @param position The position in the image produced by preceding actions
          * @param style The text style
          */
         data class Text(
             val text: String,
-            val sourcePosition: IntOffset,
+            val position: IntOffset,
             val style: TextStyle,
         ) : Drawing
 
