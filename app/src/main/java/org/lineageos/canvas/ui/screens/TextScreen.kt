@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +25,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.round
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.ui.composables.CanvasImage
 import org.lineageos.canvas.ui.composables.ImageInformation
@@ -43,6 +46,7 @@ fun TextScreen(
     var textEditorPosition by remember { mutableStateOf<IntOffset?>(null) }
 
     var imageInformation by remember { mutableStateOf<ImageInformation?>(null) }
+    var pendingActions by remember { mutableStateOf(emptyList<Action.Drawing.Text>()) }
 
     BackHandler(enabled = textEditorPosition != null) {
         textEditorPosition = null
@@ -74,6 +78,18 @@ fun TextScreen(
                     },
             ) { imageInformation = it }
 
+            imageInformation?.let { imageInfo ->
+                pendingActions.forEach { action ->
+                    Text(
+                        text = action.text,
+                        modifier = Modifier.offset {
+                            imageInfo.bitmapOffsetToView(action.position).round()
+                        },
+                        style = action.style,
+                    )
+                }
+            }
+
             textEditorPosition?.let {
                 TextEditorOverlay(
                     onDismiss = {
@@ -86,7 +102,7 @@ fun TextScreen(
                             style = textStyle,
                         )
 
-                        onAddAction(action)
+                        pendingActions = pendingActions + action
 
                         textEditorPosition = null
                     },
@@ -96,7 +112,10 @@ fun TextScreen(
         }
 
         SimpleActionBottomBar(
-            onConfirm = null,
+            onConfirm = {
+                pendingActions.forEach(onAddAction)
+                onCancel()
+            },
             onCancel = onCancel,
         )
     }

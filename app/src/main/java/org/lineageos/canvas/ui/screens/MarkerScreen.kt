@@ -100,6 +100,8 @@ private fun StrokeScreen(
     var isDrawing by remember { mutableStateOf(false) }
     var previewPoints by remember { mutableStateOf(emptyList<Offset>()) }
     var imagePoints by remember { mutableStateOf(emptyList<IntOffset>()) }
+    var pendingActions by remember { mutableStateOf(emptyList<Action>()) }
+    var completedPreviewStrokes by remember { mutableStateOf(emptyList<List<Offset>>()) }
 
     Column {
         Box(
@@ -131,7 +133,9 @@ private fun StrokeScreen(
                             },
                             onDragEnd = {
                                 if (isDrawing && imagePoints.isNotEmpty()) {
-                                    onAddAction(createAction(imagePoints.toList()))
+                                    pendingActions = pendingActions + createAction(imagePoints.toList())
+                                    completedPreviewStrokes = completedPreviewStrokes +
+                                        listOf(previewPoints)
                                 }
                                 isDrawing = false
                                 previewPoints = emptyList()
@@ -160,34 +164,42 @@ private fun StrokeScreen(
                         info.imageViewRect.width / info.bitmapSize.width
                 } ?: 8.dp.toPx()
 
-                if (previewPoints.size == 1) {
-                    drawCircle(
-                        color = color,
-                        radius = previewStrokeWidth / 2f,
-                        center = previewPoints.first(),
-                    )
-                } else if (previewPoints.size > 1) {
-                    val path = Path().apply {
-                        moveTo(previewPoints.first().x, previewPoints.first().y)
-                        previewPoints.drop(1).forEach { point ->
-                            lineTo(point.x, point.y)
+                fun drawStroke(points: List<Offset>) {
+                    if (points.size == 1) {
+                        drawCircle(
+                            color = color,
+                            radius = previewStrokeWidth / 2f,
+                            center = points.first(),
+                        )
+                    } else if (points.size > 1) {
+                        val path = Path().apply {
+                            moveTo(points.first().x, points.first().y)
+                            points.drop(1).forEach { point ->
+                                lineTo(point.x, point.y)
+                            }
                         }
+                        drawPath(
+                            path = path,
+                            color = color,
+                            style = Stroke(
+                                width = previewStrokeWidth,
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round,
+                            ),
+                        )
                     }
-                    drawPath(
-                        path = path,
-                        color = color,
-                        style = Stroke(
-                            width = previewStrokeWidth,
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round,
-                        ),
-                    )
                 }
+
+                completedPreviewStrokes.forEach(::drawStroke)
+                drawStroke(previewPoints)
             }
         }
 
         SimpleActionBottomBar(
-            onConfirm = null,
+            onConfirm = {
+                pendingActions.forEach(onAddAction)
+                onCancel()
+            },
             onCancel = onCancel,
         )
     }

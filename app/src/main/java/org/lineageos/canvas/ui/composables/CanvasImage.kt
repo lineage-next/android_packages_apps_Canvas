@@ -115,7 +115,7 @@ data class ImageInformation(
     /**
      * Convert an [IntOffset] relative to the bitmap to an [Offset] relative to the view.
      */
-    private fun bitmapOffsetToView(offset: IntOffset): Offset = offset
+    fun bitmapOffsetToView(offset: IntOffset): Offset = offset
         .toOffset()
         .times(bitmapToViewScaleFactor)
         .plus(imageViewRect.topLeft)
