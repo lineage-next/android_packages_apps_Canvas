@@ -15,7 +15,9 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -73,9 +75,13 @@ fun CanvasApp(
                     )
                 },
             ) { innerPadding ->
-                Column {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .consumeWindowInsets(innerPadding),
+                ) {
                     CanvasNavDisplay(
-                        innerPadding = innerPadding,
                         navigationBackStack = navigationBackStack,
                         bitmapWithOverlayActions = adjustedBitmapWithActions ?: return@Scaffold,
                         finalResultBitmap = finalResultBitmap ?: return@Scaffold,
@@ -83,9 +89,7 @@ fun CanvasApp(
                         onAddAction = editViewModel::addAction,
                         currentCategory = currentCategory,
                         onCategorySelected = { currentCategory = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
+                        modifier = Modifier.weight(1f),
                     )
 
                     AnimatedVisibility(

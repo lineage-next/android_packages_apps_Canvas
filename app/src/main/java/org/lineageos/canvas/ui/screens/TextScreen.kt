@@ -9,7 +9,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -37,7 +36,6 @@ import org.lineageos.canvas.ui.composables.TextEditorOverlay
  */
 @Composable
 fun TextScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     cropRect: IntRect?,
     onAddAction: (Action) -> Unit,
@@ -52,12 +50,11 @@ fun TextScreen(
         textEditorPosition = null
     }
 
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(innerPadding)
         ) {
             CanvasImage(
                 imageBitmap = imageBitmap,

@@ -9,11 +9,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,12 +42,10 @@ private const val HIGHLIGHTER_STROKE_WIDTH = 32f
  */
 @Composable
 fun MarkerScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     onAddAction: (Action) -> Unit,
     onCancel: () -> Unit,
 ) = StrokeScreen(
-    innerPadding = innerPadding,
     imageBitmap = imageBitmap,
     initialColor = Color.Red,
     strokeWidth = MARKER_STROKE_WIDTH,
@@ -69,12 +65,10 @@ fun MarkerScreen(
  */
 @Composable
 fun HighlighterScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     onAddAction: (Action) -> Unit,
     onCancel: () -> Unit,
 ) = StrokeScreen(
-    innerPadding = innerPadding,
     imageBitmap = imageBitmap,
     initialColor = Color.Yellow,
     colorTransform = { it.copy(alpha = 0.4f) },
@@ -92,7 +86,6 @@ fun HighlighterScreen(
 
 @Composable
 private fun StrokeScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     initialColor: Color,
     colorTransform: (Color) -> Color = { it },
@@ -112,19 +105,17 @@ private fun StrokeScreen(
         mutableStateOf(emptyList<Pair<List<Offset>, Color>>())
     }
 
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .padding(innerPadding),
+                .weight(1f),
         ) {
             CanvasImage(
                 imageBitmap = imageBitmap,
                 cropRect = null,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .safeContentPadding(),
+                    .fillMaxSize(),
             ) { imageInformation = it }
 
             Canvas(

@@ -8,7 +8,6 @@ package org.lineageos.canvas.ui.composables
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,6 @@ fun SimpleActionBottomBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .padding(
                 horizontal = 24.dp,
                 vertical = 16.dp,

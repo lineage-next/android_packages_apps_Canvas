@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -64,7 +63,6 @@ fun IdleBottomBar(
 ) {
     Box(
         modifier = modifier
-            .navigationBarsPadding()
             .padding(bottom = 16.dp)
             .height(64.dp)
             .fillMaxWidth()

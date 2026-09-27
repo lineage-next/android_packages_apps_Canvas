@@ -9,11 +9,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +43,6 @@ import kotlin.math.abs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CropScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     initialCropRect: IntRect?,
     onConfirm: (Action) -> Unit,
@@ -63,20 +60,18 @@ fun CropScreen(
         }
     }
 
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .padding(innerPadding),
+                .weight(1f),
         ) {
             CanvasImage(
                 imageBitmap = imageBitmap,
                 cropRect = null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
-                    .safeContentPadding(),
+                    .padding(16.dp),
             ) { imageInformation = it }
 
             imageInformation?.let { imageInformation ->

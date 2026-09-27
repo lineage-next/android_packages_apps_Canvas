@@ -6,7 +6,6 @@
 package org.lineageos.canvas.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -22,7 +21,6 @@ import org.lineageos.canvas.ui.composables.CanvasImage
  */
 @Composable
 fun HomeScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     cropRect: IntRect?,
     currentCategory: EditMode.Category?,
@@ -36,7 +34,6 @@ fun HomeScreen(
         imageBitmap = imageBitmap,
         cropRect = cropRect,
         modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding),
+            .fillMaxSize(),
     )
 }

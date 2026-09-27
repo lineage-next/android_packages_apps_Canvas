@@ -8,7 +8,6 @@ package org.lineageos.canvas.ui.navigation
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
@@ -30,7 +29,6 @@ import org.lineageos.canvas.ui.screens.TextScreen
 
 @Composable
 fun CanvasNavDisplay(
-    innerPadding: PaddingValues,
     navigationBackStack: SnapshotStateList<Screen>,
     bitmapWithOverlayActions: ImageBitmap,
     finalResultBitmap: ImageBitmap,
@@ -43,7 +41,6 @@ fun CanvasNavDisplay(
     val entryProvider = entryProvider {
         entry<Screen.Home> {
             HomeScreen(
-                innerPadding = innerPadding,
                 imageBitmap = finalResultBitmap,
                 cropRect = cropRect,
                 currentCategory = currentCategory,
@@ -54,7 +51,6 @@ fun CanvasNavDisplay(
         entry<Screen.Edit> {
             when (it.editMode) {
                 EditMode.CROP -> CropScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = bitmapWithOverlayActions,
                     initialCropRect = cropRect,
                     onConfirm = { action ->
@@ -65,7 +61,6 @@ fun CanvasNavDisplay(
                 )
 
                 EditMode.ROTATION -> RotationScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = bitmapWithOverlayActions,
                     cropRect = cropRect,
                     onConfirm = { action ->
@@ -76,21 +71,18 @@ fun CanvasNavDisplay(
                 )
 
                 EditMode.MARKER -> MarkerScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = finalResultBitmap,
                     onAddAction = onAddAction,
                     onCancel = navigationBackStack::removeLastOrNull,
                 )
 
                 EditMode.HIGHLIGHTER -> HighlighterScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = finalResultBitmap,
                     onAddAction = onAddAction,
                     onCancel = navigationBackStack::removeLastOrNull,
                 )
 
                 EditMode.TEXT -> TextScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = finalResultBitmap,
                     cropRect = cropRect,
                     onAddAction = onAddAction,
@@ -98,7 +90,6 @@ fun CanvasNavDisplay(
                 )
 
                 EditMode.BRIGHTNESS -> BrightnessScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = bitmapWithOverlayActions,
                     cropRect = cropRect,
                     onConfirm = { action ->
@@ -109,7 +100,6 @@ fun CanvasNavDisplay(
                 )
 
                 EditMode.CONTRAST -> ContrastScreen(
-                    innerPadding = innerPadding,
                     imageBitmap = bitmapWithOverlayActions,
                     cropRect = cropRect,
                     onConfirm = { action ->

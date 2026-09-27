@@ -8,7 +8,6 @@ package org.lineageos.canvas.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +35,6 @@ import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
 
 @Composable
 fun RotationScreen(
-    innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
     cropRect: IntRect?,
     onConfirm: (Action?) -> Unit,
@@ -44,12 +42,11 @@ fun RotationScreen(
 ) {
     var rotation by remember { mutableStateOf(RotationStep.ROT_0) }
 
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .padding(innerPadding),
+                .weight(1f),
             contentAlignment = Alignment.Center,
         ) {
             CanvasImage(
