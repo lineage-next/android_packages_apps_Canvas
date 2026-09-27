@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import org.lineageos.canvas.ext.rotateBy
 import org.lineageos.canvas.ext.size
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.HistoryList
@@ -148,6 +149,7 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
                 is Action.Adjustment -> currentBitmap // TODO: Apply the adjustment
 
                 is Action.Transformation.Crop -> currentBitmap.crop(action.rect)
+                is Action.Transformation.Rotation -> currentBitmap.rotateBy(action.rotation)
 
                 is Action.Drawing -> currentBitmap.createEmptyBitmap().draw {
                     drawImage(currentBitmap)
@@ -226,6 +228,10 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
             is Action.Transformation -> when (action) {
                 is Action.Transformation.Crop -> {
+                    // Handled by the action replay pipeline
+                }
+
+                is Action.Transformation.Rotation -> {
                     // Handled by the action replay pipeline
                 }
             }

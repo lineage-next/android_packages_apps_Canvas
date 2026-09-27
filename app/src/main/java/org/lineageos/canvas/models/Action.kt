@@ -41,6 +41,11 @@ sealed interface Action {
          * Crop the current image to a rectangle in its current coordinates.
          */
         data class Crop(val rect: IntRect) : Transformation
+
+        /**
+         * Rotate the current image.
+         */
+        data class Rotation(val rotation: RotationStep) : Transformation
     }
 
     sealed interface Drawing : Action {
@@ -70,5 +75,29 @@ sealed interface Action {
         data class Eraser(
             val marker: Marker,
         ) : Drawing
+    }
+}
+
+/**
+ * A supported image rotation.
+ */
+enum class RotationStep(val degrees: Float) {
+    ROT_0(0f),
+    ROT_90(90f),
+    ROT_180(180f),
+    ROT_270(270f);
+
+    fun clockwise() = when (this) {
+        ROT_0 -> ROT_90
+        ROT_90 -> ROT_180
+        ROT_180 -> ROT_270
+        ROT_270 -> ROT_0
+    }
+
+    fun counterClockwise() = when (this) {
+        ROT_0 -> ROT_270
+        ROT_90 -> ROT_0
+        ROT_180 -> ROT_90
+        ROT_270 -> ROT_180
     }
 }
