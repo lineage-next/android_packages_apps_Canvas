@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
@@ -21,6 +22,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
@@ -50,6 +52,8 @@ import org.lineageos.canvas.ui.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CanvasTopAppBar(
+    canClose: Boolean,
+    onClose: () -> Unit,
     currentScreen: Screen,
     isWritable: Boolean,
     onSave: () -> Unit,
@@ -76,6 +80,18 @@ fun CanvasTopAppBar(
             }
         },
         modifier = modifier,
+        navigationIcon = {
+            if (canClose) {
+                IconButton(
+                    onClick = onClose
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = null,
+                    )
+                }
+            }
+        },
         actions = {
             when (currentScreen) {
                 is Screen.Home -> {
