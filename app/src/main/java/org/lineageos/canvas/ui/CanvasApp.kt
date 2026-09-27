@@ -63,9 +63,6 @@ fun CanvasApp(
                 modifier = modifier,
                 topBar = {
                     CanvasTopAppBar(
-                        canGoBack = navigationBackStack.size > 1,
-                        onBack = { navigationBackStack.removeLast() },
-                        onClose = onClose,
                         currentScreen = navigationBackStack.last(),
                         isWritable = isWritable,
                         onSave = onSave,

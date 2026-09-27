@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
@@ -23,11 +21,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
@@ -52,9 +50,6 @@ import org.lineageos.canvas.ui.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CanvasTopAppBar(
-    canGoBack: Boolean,
-    onBack: () -> Unit,
-    onClose: () -> Unit,
     currentScreen: Screen,
     isWritable: Boolean,
     onSave: () -> Unit,
@@ -81,22 +76,6 @@ fun CanvasTopAppBar(
             }
         },
         modifier = modifier,
-        navigationIcon = {
-            IconButton(
-                onClick = when (canGoBack) {
-                    true -> onBack
-                    false -> onClose
-                },
-            ) {
-                Icon(
-                    imageVector = when (canGoBack) {
-                        true -> Icons.AutoMirrored.Filled.ArrowBack
-                        false -> Icons.Filled.Close
-                    },
-                    contentDescription = null,
-                )
-            }
-        },
         actions = {
             when (currentScreen) {
                 is Screen.Home -> {
@@ -135,7 +114,9 @@ fun CanvasTopAppBar(
 
                                 TooltipBox(
                                     positionProvider =
-                                        TooltipDefaults.rememberTooltipPositionProvider(),
+                                        TooltipDefaults.rememberTooltipPositionProvider(
+                                            TooltipAnchorPosition.Above
+                                        ),
                                     tooltip = { PlainTooltip { Text(description) } },
                                     state = rememberTooltipState(),
                                 ) {
