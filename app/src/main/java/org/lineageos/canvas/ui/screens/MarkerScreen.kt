@@ -34,6 +34,7 @@ import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.ui.composables.CanvasImage
 import org.lineageos.canvas.ui.composables.ImageInformation
 import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
+import org.lineageos.canvas.ui.composables.StrokeColorPalette
 
 private const val MARKER_STROKE_WIDTH = 12f
 private const val HIGHLIGHTER_STROKE_WIDTH = 32f
@@ -50,11 +51,12 @@ fun MarkerScreen(
 ) = StrokeScreen(
     innerPadding = innerPadding,
     imageBitmap = imageBitmap,
-    color = Color.Red,
+    initialColor = Color.Red,
     strokeWidth = MARKER_STROKE_WIDTH,
-    createAction = { points ->
+    createAction = { points, color ->
         Action.Drawing.Marker(
             points = points,
+            color = color,
             strokeWidth = MARKER_STROKE_WIDTH,
         )
     },
@@ -74,11 +76,13 @@ fun HighlighterScreen(
 ) = StrokeScreen(
     innerPadding = innerPadding,
     imageBitmap = imageBitmap,
-    color = Color.Yellow.copy(alpha = 0.4f),
+    initialColor = Color.Yellow,
+    colorTransform = { it.copy(alpha = 0.4f) },
     strokeWidth = HIGHLIGHTER_STROKE_WIDTH,
-    createAction = { points ->
+    createAction = { points, color ->
         Action.Drawing.Highlighter(
             points = points,
+            color = color,
             strokeWidth = HIGHLIGHTER_STROKE_WIDTH,
         )
     },
@@ -90,9 +94,10 @@ fun HighlighterScreen(
 private fun StrokeScreen(
     innerPadding: PaddingValues,
     imageBitmap: ImageBitmap,
-    color: Color,
+    initialColor: Color,
+    colorTransform: (Color) -> Color = { it },
     strokeWidth: Float,
-    createAction: (List<IntOffset>) -> Action,
+    createAction: (List<IntOffset>, Color) -> Action,
     onAddAction: (Action) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -100,8 +105,12 @@ private fun StrokeScreen(
     var isDrawing by remember { mutableStateOf(false) }
     var previewPoints by remember { mutableStateOf(emptyList<Offset>()) }
     var imagePoints by remember { mutableStateOf(emptyList<IntOffset>()) }
+    var color by remember { mutableStateOf(initialColor) }
+    var activeStrokeColor by remember { mutableStateOf(initialColor) }
     var pendingActions by remember { mutableStateOf(emptyList<Action>()) }
-    var completedPreviewStrokes by remember { mutableStateOf(emptyList<List<Offset>>()) }
+    var completedPreviewStrokes by remember {
+        mutableStateOf(emptyList<Pair<List<Offset>, Color>>())
+    }
 
     Column {
         Box(
@@ -129,13 +138,17 @@ private fun StrokeScreen(
                                 if (isDrawing) {
                                     previewPoints = listOf(offset)
                                     imagePoints = listOf(info!!.viewOffsetToOriginalBitmap(offset))
+                                    activeStrokeColor = colorTransform(color)
                                 }
                             },
                             onDragEnd = {
                                 if (isDrawing && imagePoints.isNotEmpty()) {
-                                    pendingActions = pendingActions + createAction(imagePoints.toList())
+                                    pendingActions = pendingActions + createAction(
+                                        imagePoints.toList(),
+                                        activeStrokeColor,
+                                    )
                                     completedPreviewStrokes = completedPreviewStrokes +
-                                        listOf(previewPoints)
+                                        listOf(previewPoints to activeStrokeColor)
                                 }
                                 isDrawing = false
                                 previewPoints = emptyList()
@@ -164,10 +177,10 @@ private fun StrokeScreen(
                         info.imageViewRect.width / info.bitmapSize.width
                 } ?: 8.dp.toPx()
 
-                fun drawStroke(points: List<Offset>) {
+                fun drawStroke(points: List<Offset>, strokeColor: Color) {
                     if (points.size == 1) {
                         drawCircle(
-                            color = color,
+                            color = strokeColor,
                             radius = previewStrokeWidth / 2f,
                             center = points.first(),
                         )
@@ -180,7 +193,7 @@ private fun StrokeScreen(
                         }
                         drawPath(
                             path = path,
-                            color = color,
+                            color = strokeColor,
                             style = Stroke(
                                 width = previewStrokeWidth,
                                 cap = StrokeCap.Round,
@@ -190,10 +203,21 @@ private fun StrokeScreen(
                     }
                 }
 
-                completedPreviewStrokes.forEach(::drawStroke)
-                drawStroke(previewPoints)
+                completedPreviewStrokes.forEach { (points, strokeColor) ->
+                    drawStroke(points, strokeColor)
+                }
+                drawStroke(previewPoints, activeStrokeColor)
             }
         }
+
+        StrokeColorPalette(
+            selectedColor = color,
+            onColorSelected = { color = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 8.dp),
+        )
 
         SimpleActionBottomBar(
             onConfirm = {
