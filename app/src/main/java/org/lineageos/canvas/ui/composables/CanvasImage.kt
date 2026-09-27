@@ -17,6 +17,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -172,6 +173,7 @@ fun CanvasImage(
     imageBitmap: ImageBitmap,
     cropRect: IntRect?,
     modifier: Modifier = Modifier,
+    colorFilter: ColorFilter? = null,
     onImageInformation: (ImageInformation) -> Unit = {},
 ) {
     var positionInParent by remember { mutableStateOf<Offset?>(null) }
@@ -223,6 +225,7 @@ fun CanvasImage(
         Image(
             painter = bitmapPainter,
             contentDescription = null,
+            colorFilter = colorFilter,
             modifier = modifier
                 .sharedElement(
                     sharedContentState = rememberSharedContentState("canvas-image"),

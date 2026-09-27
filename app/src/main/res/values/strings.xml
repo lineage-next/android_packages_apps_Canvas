@@ -25,6 +25,7 @@
     <string name="edit_mode_text">Text</string>
     <string name="edit_mode_brightness">Brightness</string>
     <string name="edit_mode_contrast">Contrast</string>
+    <string name="adjustment_percent">%1$.0f%%</string>
 
 
     <string name="enter_text">Enter text…</string>

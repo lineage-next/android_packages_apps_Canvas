@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import org.lineageos.canvas.ext.rotateBy
+import org.lineageos.canvas.ext.adjustBrightness
 import org.lineageos.canvas.ext.size
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.HistoryList
@@ -152,7 +153,9 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
         actions.fold(sourceBitmap) { currentBitmap, action ->
             when (action) {
-                is Action.Adjustment -> currentBitmap // TODO: Apply the adjustment
+                is Action.Adjustment.Brightness -> currentBitmap.adjustBrightness(action.value)
+
+                is Action.Adjustment.Contrast -> currentBitmap // TODO: Apply contrast
 
                 is Action.Transformation.Crop -> currentBitmap.crop(action.rect)
                 is Action.Transformation.Rotation -> currentBitmap.rotateBy(action.rotation)
