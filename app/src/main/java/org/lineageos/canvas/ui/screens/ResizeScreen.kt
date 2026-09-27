@@ -101,7 +101,7 @@ fun ResizeScreen(
                         )
 
                         val action = Action.Transformation.Resize(
-                            rect = originalImageCropRect,
+                            sourceRect = originalImageCropRect,
                         )
 
                         onConfirm(action)

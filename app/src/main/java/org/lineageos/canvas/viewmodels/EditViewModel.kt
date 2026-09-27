@@ -144,7 +144,7 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
             it is Action.Transformation.Resize
         } as? Action.Transformation.Resize
 
-        lastResize?.rect ?: sourceBitmap?.size?.toIntRect()
+        lastResize?.sourceRect ?: sourceBitmap?.size?.toIntRect()
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -285,8 +285,8 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
                         textMeasurer = textMeasurer,
                         text = action.text,
                         topLeft = Offset(
-                            action.position.x.toFloat(),
-                            action.position.y.toFloat(),
+                            action.sourcePosition.x.toFloat(),
+                            action.sourcePosition.y.toFloat(),
                         ),
                         style = action.style,
                     )
