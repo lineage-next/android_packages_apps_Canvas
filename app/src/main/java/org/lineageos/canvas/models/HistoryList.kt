@@ -114,6 +114,16 @@ class HistoryList<E>(collection: Collection<E>) {
         canRedo
     }
 
+    /**
+     * Remove all elements from the history.
+     */
+    fun clear() = transaction {
+        allElements.clear()
+        currentIndex.value = -1
+
+        true
+    }
+
     private fun takeSnapshot() = Snapshot(
         allElements = allElements.toList(),
         currentIndex = currentIndex.value,

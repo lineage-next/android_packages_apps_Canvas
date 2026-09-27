@@ -254,6 +254,9 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
      * @param isWritable whether the image is writable
      */
     fun setUri(uri: Uri, isWritable: Boolean) {
+        if (_uri.value != uri) {
+            historyList.clear()
+        }
         _uri.value = uri
         _isWritable.value = isWritable
     }
