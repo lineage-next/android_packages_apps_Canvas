@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val saveStatus by resultOpsViewModel.saveStatus.collectAsState()
             val image by resultOpsViewModel.image.collectAsState()
+            val finalBitmap by editViewModel.finalResultBitmap.collectAsState()
 
             LaunchedEffect(saveStatus) {
                 when (val status = saveStatus) {
@@ -116,7 +117,7 @@ class MainActivity : ComponentActivity() {
                         finish()
                     },
                     onSave = {
-                        editViewModel.finalResultBitmap.value?.let {
+                        finalBitmap?.let {
                             resultOpsViewModel.saveImage(it)
                         }
                     },
@@ -131,7 +132,7 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     onShare = {
-                        editViewModel.finalResultBitmap.value?.let {
+                        finalBitmap?.let {
                             resultOpsViewModel.shareImage(it)
                         }
                     },

@@ -8,6 +8,7 @@ package org.lineageos.canvas.viewmodels
 import android.app.Application
 import android.net.Uri
 import android.view.View
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -163,15 +164,16 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
         val cached = renderCache
         val reusableCache = cached?.takeIf {
             it.sourceBitmap === sourceBitmap &&
-                it.actions.size <= actions.size &&
-                it.actions.indices.all { index -> it.actions[index] === actions[index] }
+                    it.actions.size <= actions.size &&
+                    it.actions.indices.all { index -> it.actions[index] === actions[index] }
         }
         val startingBitmap = reusableCache?.bitmap ?: sourceBitmap
         val firstActionToRender = reusableCache?.actions?.size ?: 0
 
-        val result = actions.drop(firstActionToRender).fold(startingBitmap) { currentBitmap, action ->
-            currentBitmap.applyAction(action)
-        }
+        val result =
+            actions.drop(firstActionToRender).fold(startingBitmap) { currentBitmap, action ->
+                currentBitmap.applyAction(action)
+            }
 
         renderCache = RenderCache(sourceBitmap, actions.toList(), result)
         result
