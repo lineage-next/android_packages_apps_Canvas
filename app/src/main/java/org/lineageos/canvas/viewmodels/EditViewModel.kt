@@ -55,6 +55,14 @@ import org.lineageos.canvas.models.HistoryList
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditViewModel(application: Application) : AndroidViewModel(application) {
+    private data class RenderCache(
+        val sourceBitmap: ImageBitmap,
+        val actions: List<Action>,
+        val bitmap: ImageBitmap,
+    )
+
+    private var renderCache: RenderCache? = null
+
     /**
      * Coil's ImageLoader.
      */
@@ -152,21 +160,21 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
     ) { sourceBitmap, actions ->
         val sourceBitmap = sourceBitmap ?: return@combine null
 
-        actions.fold(sourceBitmap) { currentBitmap, action ->
-            when (action) {
-                is Action.Adjustment.Brightness -> currentBitmap.adjustBrightness(action.value)
-
-                is Action.Adjustment.Contrast -> currentBitmap.adjustContrast(action.value)
-
-                is Action.Transformation.Crop -> currentBitmap.crop(action.rect)
-                is Action.Transformation.Rotation -> currentBitmap.rotateBy(action.rotation)
-
-                is Action.Drawing -> currentBitmap.createEmptyBitmap(hasAlpha = true).draw {
-                    drawImage(currentBitmap)
-                    drawAction(action)
-                }
-            }
+        val cached = renderCache
+        val reusableCache = cached?.takeIf {
+            it.sourceBitmap === sourceBitmap &&
+                it.actions.size <= actions.size &&
+                it.actions.indices.all { index -> it.actions[index] === actions[index] }
         }
+        val startingBitmap = reusableCache?.bitmap ?: sourceBitmap
+        val firstActionToRender = reusableCache?.actions?.size ?: 0
+
+        val result = actions.drop(firstActionToRender).fold(startingBitmap) { currentBitmap, action ->
+            currentBitmap.applyAction(action)
+        }
+
+        renderCache = RenderCache(sourceBitmap, actions.toList(), result)
+        result
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -222,6 +230,17 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
 
     fun redo() {
         historyList.redo()
+    }
+
+    private fun ImageBitmap.applyAction(action: Action): ImageBitmap = when (action) {
+        is Action.Adjustment.Brightness -> adjustBrightness(action.value)
+        is Action.Adjustment.Contrast -> adjustContrast(action.value)
+        is Action.Transformation.Crop -> crop(action.rect)
+        is Action.Transformation.Rotation -> rotateBy(action.rotation)
+        is Action.Drawing -> createEmptyBitmap(hasAlpha = true).draw {
+            drawImage(this@applyAction)
+            drawAction(action)
+        }
     }
 
     private fun DrawScope.drawAction(action: Action) {
