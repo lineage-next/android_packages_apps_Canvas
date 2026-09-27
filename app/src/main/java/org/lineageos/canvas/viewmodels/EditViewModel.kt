@@ -6,9 +6,12 @@
 package org.lineageos.canvas.viewmodels
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import android.view.View
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -34,16 +37,13 @@ import androidx.compose.ui.unit.toIntRect
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
-import coil3.imageLoader
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -63,11 +63,6 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     private var renderCache: RenderCache? = null
-
-    /**
-     * Coil's ImageLoader.
-     */
-    private val imageLoader = application.imageLoader
 
     /**
      * The [HistoryList] of actions.
@@ -95,19 +90,9 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
      * The untouched bitmap of the image.
      */
     val sourceBitmap = uri
-        .mapLatest { uri ->
-            val sharedKey = uri.toString()
-
-            val imageRequest = ImageRequest.Builder(application)
-                .data(uri)
-                .allowHardware(false)
-                .placeholderMemoryCacheKey(sharedKey)
-                .memoryCacheKey(sharedKey)
-                .build()
-
-            val imageResult = imageLoader.execute(imageRequest)
-
-            imageResult.image?.toBitmap()?.asImageBitmap()
+        .filterNotNull()
+        .mapLatest {
+            decodeBitmap(it)
         }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -115,6 +100,46 @@ class EditViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.WhileSubscribed(),
             initialValue = null,
         )
+
+    fun decodeBitmap(uri: Uri): ImageBitmap? {
+        val contentResolver = application.contentResolver
+
+        val bitmap = contentResolver.openInputStream(uri)?.use { stream ->
+            BitmapFactory.decodeStream(stream)
+        } ?: return null
+
+        val orientation = contentResolver.openInputStream(uri)?.use { stream ->
+            ExifInterface(stream).getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+        } ?: ExifInterface.ORIENTATION_NORMAL
+
+        return applyOrientation(bitmap, orientation).asImageBitmap()
+    }
+
+    private fun applyOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                matrix.postRotate(90f)
+                matrix.postScale(-1f, 1f)
+            }
+
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                matrix.postRotate(270f)
+                matrix.postScale(-1f, 1f)
+            }
+
+            else -> return bitmap
+        }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
 
     /**
      * The currently active actions applied to the image.
