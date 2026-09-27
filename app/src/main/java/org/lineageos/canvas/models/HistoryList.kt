@@ -50,7 +50,7 @@ class HistoryList<E>(collection: Collection<E>) {
     /**
      * Index of [allElements] pointing to the last active element.
      */
-    private val currentIndex = MutableStateFlow(-1)
+    private val currentIndex = MutableStateFlow(allElements.lastIndex)
 
     /**
      * Serializes synchronous history mutations.
