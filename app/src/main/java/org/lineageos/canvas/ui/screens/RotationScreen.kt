@@ -57,7 +57,7 @@ fun RotationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(48.dp),
+                .padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (imageBitmap.width > 0 && imageBitmap.height > 0 &&

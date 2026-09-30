@@ -115,7 +115,8 @@ private fun StrokeScreen(
                 imageBitmap = imageBitmap,
                 cropRect = null,
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(16.dp),
             ) { imageInformation = it }
 
             Canvas(
@@ -206,8 +207,7 @@ private fun StrokeScreen(
             onColorSelected = { color = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
         )
 
         CanvasBottomBar(
