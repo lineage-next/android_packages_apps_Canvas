@@ -5,6 +5,7 @@
 
 package org.lineageos.canvas.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,6 +33,11 @@ import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.RotationStep
 import org.lineageos.canvas.ui.composables.CanvasImage
 import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
 
 @Composable
 fun RotationScreen(
@@ -40,7 +46,10 @@ fun RotationScreen(
     onConfirm: (Action?) -> Unit,
     onCancel: () -> Unit,
 ) {
-    var rotation by remember { mutableStateOf(RotationStep.ROT_0) }
+    var quarterTurns by remember { mutableIntStateOf(0) }
+    val rotation = RotationStep.entries[quarterTurns.mod(RotationStep.entries.size)]
+
+    val degrees by animateFloatAsState(quarterTurns * 90f)
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -56,7 +65,29 @@ fun RotationScreen(
                     .fillMaxSize()
                     .padding(48.dp)
                     .graphicsLayer {
-                        rotationZ = rotation.degrees
+                        if (size.isEmpty() || imageBitmap.width == 0 || imageBitmap.height == 0) {
+                            return@graphicsLayer
+                        }
+
+                        // Scale the fitted image so that its rotated bounding box fits the layer
+                        val fitScale = min(
+                            size.width / imageBitmap.width,
+                            size.height / imageBitmap.height,
+                        )
+                        val width = imageBitmap.width * fitScale
+                        val height = imageBitmap.height * fitScale
+
+                        val radians = degrees * PI.toFloat() / 180f
+                        val cos = abs(cos(radians))
+                        val sin = abs(sin(radians))
+                        val boundsWidth = width * cos + height * sin
+                        val boundsHeight = width * sin + height * cos
+
+                        val scale = min(size.width / boundsWidth, size.height / boundsHeight)
+
+                        rotationZ = degrees
+                        scaleX = scale
+                        scaleY = scale
                     },
             )
         }
@@ -68,14 +99,14 @@ fun RotationScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = { rotation = rotation.counterClockwise() }) {
+            IconButton(onClick = { quarterTurns-- }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.RotateLeft,
                     contentDescription = null,
                 )
             }
 
-            IconButton(onClick = { rotation = rotation.clockwise() }) {
+            IconButton(onClick = { quarterTurns++ }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.RotateRight,
                     contentDescription = null,
