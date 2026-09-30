@@ -54,7 +54,7 @@ fun CanvasNavDisplay(
                     imageBitmap = bitmapWithOverlayActions,
                     initialCropRect = cropRect,
                     onConfirm = { action ->
-                        onAddAction(action)
+                        action?.let(onAddAction)
                         navigationBackStack.removeLastOrNull()
                     },
                     onCancel = navigationBackStack::removeLastOrNull,

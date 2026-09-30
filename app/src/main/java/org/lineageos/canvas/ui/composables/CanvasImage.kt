@@ -77,11 +77,10 @@ data class ImageInformation(
      */
     fun originalBitmapRectToViewRect(
         originalBitmapRect: IntRect,
-    ): Rect = bitmapRectToView(originalBitmapRect).let { viewRect ->
-        bitmapCropRect?.let {
-            viewRect.translate(-imageViewRect.topLeft)
-        } ?: viewRect
-    }
+    ): Rect = bitmapRectToView(
+        bitmapCropRect?.let { originalBitmapRect.translate(-it.topLeft) }
+            ?: originalBitmapRect
+    )
 
     /**
      * Convert a [Rect] in the image view to a [Rect] in the original bitmap.
@@ -116,7 +115,9 @@ data class ImageInformation(
     /**
      * Convert an [IntOffset] relative to the bitmap to an [Offset] relative to the view.
      */
-    fun bitmapOffsetToView(offset: IntOffset): Offset = offset
+    fun bitmapOffsetToView(offset: IntOffset): Offset = (bitmapCropRect?.let {
+        offset - it.topLeft
+    } ?: offset)
         .toOffset()
         .times(bitmapToViewScaleFactor)
         .plus(imageViewRect.topLeft)

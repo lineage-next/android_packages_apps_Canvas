@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,17 +41,13 @@ import org.lineageos.canvas.ui.theme.defaultCropOverlayStyle
 fun CropScreen(
     imageBitmap: ImageBitmap,
     initialCropRect: IntRect?,
-    onConfirm: (Action) -> Unit,
+    onConfirm: (Action?) -> Unit,
     onCancel: () -> Unit,
 ) {
     var imageInformation by remember { mutableStateOf<ImageInformation?>(null) }
-
-    var cropRect by remember { mutableStateOf<Rect?>(null) }
-
-    LaunchedEffect(initialCropRect, imageInformation) {
-        val imageInfo = imageInformation ?: return@LaunchedEffect
-        cropRect = initialCropRect?.let(imageInfo::originalBitmapRectToViewRect)
-            ?: imageInfo.imageViewRect
+    val imageBounds = IntRect(0, 0, imageBitmap.width, imageBitmap.height)
+    var cropRect by remember(imageBitmap) {
+        mutableStateOf(initialCropRect ?: imageBounds)
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -72,9 +67,9 @@ fun CropScreen(
             imageInformation?.let { imageInformation ->
                 CropOverlay(
                     imageBounds = imageInformation.imageViewRect,
-                    cropRect = cropRect ?: return@let,
+                    cropRect = imageInformation.originalBitmapRectToViewRect(cropRect),
                     onCropRectChange = { rect ->
-                        cropRect = rect
+                        cropRect = imageInformation.viewRectToOriginalBitmap(rect)
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -83,18 +78,10 @@ fun CropScreen(
 
         SimpleActionBottomBar(
             onConfirm = {
-                cropRect?.let { cropRect ->
-                    imageInformation?.let { imageInformation ->
-                        val originalImageCropRect = imageInformation.viewRectToOriginalBitmap(
-                            cropRect
-                        )
-
-                        val action = Action.Transformation.Crop(
-                            rect = originalImageCropRect,
-                        )
-
-                        onConfirm(action)
-                    }
+                if (imageInformation != null) {
+                    onConfirm(cropRect.takeIf { it != imageBounds }?.let {
+                        Action.Transformation.Crop(it)
+                    })
                 }
             },
             onCancel = onCancel,
