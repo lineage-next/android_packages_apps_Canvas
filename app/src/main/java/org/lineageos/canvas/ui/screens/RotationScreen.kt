@@ -7,12 +7,13 @@ package org.lineageos.canvas.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.RotateLeft
 import androidx.compose.material.icons.automirrored.filled.RotateRight
@@ -52,44 +53,45 @@ fun RotationScreen(
     val degrees by animateFloatAsState(quarterTurns * 90f)
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .padding(48.dp),
             contentAlignment = Alignment.Center,
         ) {
-            CanvasImage(
-                imageBitmap = imageBitmap,
-                cropRect = cropRect,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(48.dp)
-                    .graphicsLayer {
-                        if (size.isEmpty() || imageBitmap.width == 0 || imageBitmap.height == 0) {
-                            return@graphicsLayer
-                        }
+            if (imageBitmap.width > 0 && imageBitmap.height > 0 &&
+                constraints.maxWidth > 0 && constraints.maxHeight > 0
+            ) {
+                val fitScale = min(
+                    maxWidth.value / imageBitmap.width,
+                    maxHeight.value / imageBitmap.height,
+                )
+                val fittedWidth = (imageBitmap.width * fitScale).dp
+                val fittedHeight = (imageBitmap.height * fitScale).dp
 
-                        // Scale the fitted image so that its rotated bounding box fits the layer
-                        val fitScale = min(
-                            size.width / imageBitmap.width,
-                            size.height / imageBitmap.height,
-                        )
-                        val width = imageBitmap.width * fitScale
-                        val height = imageBitmap.height * fitScale
+                CanvasImage(
+                    imageBitmap = imageBitmap,
+                    cropRect = cropRect,
+                    modifier = Modifier
+                        .size(fittedWidth, fittedHeight)
+                        .graphicsLayer {
+                            val radians = degrees * PI.toFloat() / 180f
+                            val cosine = abs(cos(radians))
+                            val sine = abs(sin(radians))
+                            val boundsWidth = size.width * cosine + size.height * sine
+                            val boundsHeight = size.width * sine + size.height * cosine
+                            val scale = min(
+                                constraints.maxWidth / boundsWidth,
+                                constraints.maxHeight / boundsHeight,
+                            ).coerceAtMost(1f)
 
-                        val radians = degrees * PI.toFloat() / 180f
-                        val cos = abs(cos(radians))
-                        val sin = abs(sin(radians))
-                        val boundsWidth = width * cos + height * sin
-                        val boundsHeight = width * sin + height * cos
-
-                        val scale = min(size.width / boundsWidth, size.height / boundsHeight)
-
-                        rotationZ = degrees
-                        scaleX = scale
-                        scaleY = scale
-                    },
-            )
+                            rotationZ = degrees
+                            scaleX = scale
+                            scaleY = scale
+                        },
+                )
+            }
         }
 
         Row(
