@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.ui.composables.CanvasImage
 import org.lineageos.canvas.ui.composables.ImageInformation
-import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
+import org.lineageos.canvas.ui.composables.CanvasBottomBar
 import org.lineageos.canvas.ui.composables.StrokeColorPalette
 
 private const val MARKER_STROKE_WIDTH = 24f
@@ -210,7 +210,7 @@ private fun StrokeScreen(
                 .padding(bottom = 8.dp),
         )
 
-        SimpleActionBottomBar(
+        CanvasBottomBar(
             onConfirm = {
                 pendingActions.forEach(onAddAction)
                 onCancel()

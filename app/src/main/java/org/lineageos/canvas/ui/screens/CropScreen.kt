@@ -33,7 +33,7 @@ import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.Handle
 import org.lineageos.canvas.ui.composables.CanvasImage
 import org.lineageos.canvas.ui.composables.ImageInformation
-import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
+import org.lineageos.canvas.ui.composables.CanvasBottomBar
 import org.lineageos.canvas.ui.theme.CropOverlayStyle
 import org.lineageos.canvas.ui.theme.defaultCropOverlayStyle
 
@@ -76,7 +76,7 @@ fun CropScreen(
             }
         }
 
-        SimpleActionBottomBar(
+        CanvasBottomBar(
             onConfirm = {
                 if (imageInformation != null) {
                     onConfirm(cropRect.takeIf { it != imageBounds }?.let {

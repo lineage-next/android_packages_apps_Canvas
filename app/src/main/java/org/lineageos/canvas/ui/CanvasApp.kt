@@ -5,16 +5,8 @@
 
 package org.lineageos.canvas.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -31,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.lineageos.canvas.models.EditMode
 import org.lineageos.canvas.ui.composables.CanvasTopAppBar
-import org.lineageos.canvas.ui.composables.IdleBottomBar
 import org.lineageos.canvas.ui.navigation.CanvasNavDisplay
 import org.lineageos.canvas.ui.navigation.Screen
 import org.lineageos.canvas.viewmodels.EditViewModel
@@ -75,41 +66,23 @@ fun CanvasApp(
                     )
                 },
             ) { innerPadding ->
-                Column(
+                CanvasNavDisplay(
+                    navigationBackStack = navigationBackStack,
+                    bitmapWithOverlayActions = adjustedBitmapWithActions ?: return@Scaffold,
+                    finalResultBitmap = finalResultBitmap ?: return@Scaffold,
+                    cropRect = cropRect ?: return@Scaffold,
+                    onAddAction = editViewModel::addAction,
+                    canUndo = canUndo,
+                    canRedo = canRedo,
+                    onUndo = editViewModel::undo,
+                    onRedo = editViewModel::redo,
+                    currentCategory = currentCategory,
+                    onCategorySelected = { currentCategory = it },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                         .consumeWindowInsets(innerPadding),
-                ) {
-                    CanvasNavDisplay(
-                        navigationBackStack = navigationBackStack,
-                        bitmapWithOverlayActions = adjustedBitmapWithActions ?: return@Scaffold,
-                        finalResultBitmap = finalResultBitmap ?: return@Scaffold,
-                        cropRect = cropRect ?: return@Scaffold,
-                        onAddAction = editViewModel::addAction,
-                        currentCategory = currentCategory,
-                        onCategorySelected = { currentCategory = it },
-                        modifier = Modifier.weight(1f),
-                    )
-
-                    AnimatedVisibility(
-                        visible = navigationBackStack.lastOrNull() is Screen.Home,
-                        enter = fadeIn() + slideInVertically { it / 2 } + expandVertically(),
-                        exit = fadeOut() + slideOutVertically { it / 2 } + shrinkVertically(),
-                    ) {
-                        IdleBottomBar(
-                            canUndo = canUndo,
-                            canRedo = canRedo,
-                            onUndo = editViewModel::undo,
-                            onRedo = editViewModel::redo,
-                            currentCategory = currentCategory,
-                            onCategorySelected = { currentCategory = it },
-                            onEditModeSelected = {
-                                navigationBackStack.add(Screen.Edit(it))
-                            },
-                        )
-                    }
-                }
+                )
             }
         }
     }

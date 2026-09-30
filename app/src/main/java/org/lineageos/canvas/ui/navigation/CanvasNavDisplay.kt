@@ -34,6 +34,10 @@ fun CanvasNavDisplay(
     finalResultBitmap: ImageBitmap,
     cropRect: IntRect,
     onAddAction: (Action) -> Unit,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit,
     currentCategory: EditMode.Category?,
     onCategorySelected: (EditMode.Category?) -> Unit,
     modifier: Modifier = Modifier,
@@ -43,8 +47,15 @@ fun CanvasNavDisplay(
             HomeScreen(
                 imageBitmap = finalResultBitmap,
                 cropRect = cropRect,
+                canUndo = canUndo,
+                canRedo = canRedo,
+                onUndo = onUndo,
+                onRedo = onRedo,
                 currentCategory = currentCategory,
                 onCategorySelected = onCategorySelected,
+                onEditModeSelected = { editMode ->
+                    navigationBackStack.add(Screen.Edit(editMode))
+                },
             )
         }
 

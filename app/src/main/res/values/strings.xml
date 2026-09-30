@@ -20,6 +20,8 @@
     <!-- Edit modes -->
     <string name="edit_mode_crop">Crop</string>
     <string name="edit_mode_rotation">Rotation</string>
+    <string name="rotate_counterclockwise">Rotate counterclockwise</string>
+    <string name="rotate_clockwise">Rotate clockwise</string>
     <string name="edit_mode_marker">Marker</string>
     <string name="edit_mode_highlighter">Highlighter</string>
     <string name="edit_mode_text">Text</string>

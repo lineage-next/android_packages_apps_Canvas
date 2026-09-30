@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Crop
@@ -37,6 +38,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,12 +49,9 @@ import androidx.compose.ui.unit.dp
 import org.lineageos.canvas.R
 import org.lineageos.canvas.models.EditMode
 
-/**
- * [EditMode] selector bar. Once an edit mode has been selected, this composable should disappear,
- * to let the mode's UI take over.
- */
+/** Home screen content for the shared bottom bar. */
 @Composable
-fun IdleBottomBar(
+fun HomeBottomBarContent(
     canUndo: Boolean,
     canRedo: Boolean,
     onUndo: () -> Unit,
@@ -60,48 +59,96 @@ fun IdleBottomBar(
     currentCategory: EditMode.Category?,
     onCategorySelected: (EditMode.Category?) -> Unit,
     onEditModeSelected: (EditMode) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Box(
+    AnimatedVisibility(
+        visible = currentCategory != null,
+        enter = slideInHorizontally { it / 2 } + fadeIn(),
+        exit = slideOutHorizontally { it / 2 } + fadeOut(),
+    ) {
+        currentCategory?.let {
+            CategoryToolbar(
+                category = it,
+                onEditModeSelected = onEditModeSelected,
+                onBack = { onCategorySelected(null) },
+            )
+        }
+    }
+
+    AnimatedVisibility(
+        visible = currentCategory == null,
+        enter = slideInHorizontally() + fadeIn(),
+        exit = slideOutHorizontally() + fadeOut(),
+    ) {
+        RootHomeToolbar(
+            onCategorySelected = onCategorySelected,
+            canUndo = canUndo,
+            canRedo = canRedo,
+            onUndo = onUndo,
+            onRedo = onRedo,
+        )
+    }
+}
+
+/** Shared placement for screen actions and optional center controls. */
+@Composable
+fun CanvasBottomBar(
+    modifier: Modifier = Modifier,
+    onCancel: (() -> Unit)? = null,
+    onConfirm: (() -> Unit)? = null,
+    content: @Composable () -> Unit = {},
+) {
+    Row(
         modifier = modifier
             .padding(bottom = 16.dp)
             .height(64.dp)
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        AnimatedVisibility(
-            visible = currentCategory != null,
-            enter = slideInHorizontally { it / 2 } + fadeIn(),
-            exit = slideOutHorizontally { it / 2 } + fadeOut(),
+        onCancel?.let { CancelActionFloatingButton(onClick = it) }
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center,
         ) {
-            currentCategory?.let {
-                CategoryToolbar(
-                    category = it,
-                    onEditModeSelected = onEditModeSelected,
-                    onBack = { onCategorySelected(null) },
-                )
-            }
+            content()
         }
+        onConfirm?.let { ConfirmActionFloatingButton(onClick = it) }
+    }
+}
 
-        AnimatedVisibility(
-            visible = currentCategory == null,
-            enter = slideInHorizontally() + fadeIn(),
-            exit = slideOutHorizontally() + fadeOut(),
-        ) {
-            RootIdleBottomBar(
-                onCategorySelected = onCategorySelected,
-                canUndo = canUndo,
-                canRedo = canRedo,
-                onUndo = onUndo,
-                onRedo = onRedo,
-            )
-        }
+@Composable
+private fun CancelActionFloatingButton(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick,
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Close,
+            contentDescription = stringResource(R.string.cancel_action),
+        )
+    }
+}
+
+@Composable
+private fun ConfirmActionFloatingButton(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick,
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = stringResource(R.string.confirm_action),
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun RootIdleBottomBar(
+private fun RootHomeToolbar(
     onCategorySelected: (EditMode.Category) -> Unit,
     canUndo: Boolean,
     canRedo: Boolean,

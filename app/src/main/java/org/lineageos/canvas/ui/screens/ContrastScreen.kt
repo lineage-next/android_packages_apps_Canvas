@@ -29,7 +29,7 @@ import org.lineageos.canvas.R
 import org.lineageos.canvas.ext.contrastColorFilter
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.ui.composables.CanvasImage
-import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
+import org.lineageos.canvas.ui.composables.CanvasBottomBar
 
 @Composable
 fun ContrastScreen(
@@ -78,7 +78,7 @@ fun ContrastScreen(
             )
         }
 
-        SimpleActionBottomBar(
+        CanvasBottomBar(
             onConfirm = {
                 onConfirm(contrast.takeIf { it != 1f }?.let(Action.Adjustment::Contrast))
             },

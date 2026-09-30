@@ -6,10 +6,8 @@
 package org.lineageos.canvas.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.RotateLeft
 import androidx.compose.material.icons.automirrored.filled.RotateRight
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -28,12 +28,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
+import org.lineageos.canvas.R
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.models.RotationStep
+import org.lineageos.canvas.ui.composables.CanvasBottomBar
 import org.lineageos.canvas.ui.composables.CanvasImage
-import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -48,8 +50,6 @@ fun RotationScreen(
     onCancel: () -> Unit,
 ) {
     var quarterTurns by remember { mutableIntStateOf(0) }
-    val rotation = RotationStep.entries[quarterTurns.mod(RotationStep.entries.size)]
-
     val degrees by animateFloatAsState(quarterTurns * 90f)
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -94,36 +94,44 @@ fun RotationScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
+        CanvasBottomBar(
+            onCancel = onCancel,
+            onConfirm = {
+                val rotation = RotationStep.entries[
+                    quarterTurns.mod(RotationStep.entries.size)
+                ]
+                onConfirm(rotation.takeIf { it != RotationStep.ROT_0 }?.let {
+                    Action.Transformation.Rotation(it)
+                })
+            },
         ) {
-            IconButton(onClick = { quarterTurns-- }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.RotateLeft,
-                    contentDescription = null,
-                )
-            }
+            RotationBottomBarContent(
+                onRotateCounterclockwise = { quarterTurns-- },
+                onRotateClockwise = { quarterTurns++ },
+            )
+        }
+    }
+}
 
-            IconButton(onClick = { quarterTurns++ }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.RotateRight,
-                    contentDescription = null,
-                )
-            }
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun RotationBottomBarContent(
+    onRotateCounterclockwise: () -> Unit,
+    onRotateClockwise: () -> Unit,
+) {
+    HorizontalFloatingToolbar(expanded = true) {
+        IconButton(onClick = onRotateCounterclockwise) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.RotateLeft,
+                contentDescription = stringResource(R.string.rotate_counterclockwise),
+            )
         }
 
-        SimpleActionBottomBar(
-            onConfirm = {
-                val action = rotation.takeIf { it != RotationStep.ROT_0 }?.let {
-                    Action.Transformation.Rotation(it)
-                }
-                onConfirm(action)
-            },
-            onCancel = onCancel,
-        )
+        IconButton(onClick = onRotateClockwise) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.RotateRight,
+                contentDescription = stringResource(R.string.rotate_clockwise),
+            )
+        }
     }
 }

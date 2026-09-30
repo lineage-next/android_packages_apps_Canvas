@@ -29,7 +29,7 @@ import org.lineageos.canvas.R
 import org.lineageos.canvas.ext.brightnessColorFilter
 import org.lineageos.canvas.models.Action
 import org.lineageos.canvas.ui.composables.CanvasImage
-import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
+import org.lineageos.canvas.ui.composables.CanvasBottomBar
 
 @Composable
 fun BrightnessScreen(
@@ -78,7 +78,7 @@ fun BrightnessScreen(
             )
         }
 
-        SimpleActionBottomBar(
+        CanvasBottomBar(
             onConfirm = {
                 onConfirm(brightness.takeIf { it != 0f }?.let(Action.Adjustment::Brightness))
             },
