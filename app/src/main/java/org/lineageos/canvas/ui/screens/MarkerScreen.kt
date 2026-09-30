@@ -34,7 +34,7 @@ import org.lineageos.canvas.ui.composables.ImageInformation
 import org.lineageos.canvas.ui.composables.SimpleActionBottomBar
 import org.lineageos.canvas.ui.composables.StrokeColorPalette
 
-private const val MARKER_STROKE_WIDTH = 12f
+private const val MARKER_STROKE_WIDTH = 24f
 private const val HIGHLIGHTER_STROKE_WIDTH = 32f
 
 /**
