@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import org.lineageos.canvas.R
 import org.lineageos.canvas.models.EditMode
@@ -246,8 +247,8 @@ fun EditModeButton(
             imageVector = when (editMode) {
                 EditMode.CROP -> Icons.Filled.Crop
                 EditMode.ROTATION -> Icons.Filled.CropRotate
-                EditMode.MARKER -> Icons.Filled.Draw
-                EditMode.HIGHLIGHTER -> Icons.Filled.Draw
+                EditMode.MARKER -> ImageVector.vectorResource(R.drawable.ic_ink_pen)
+                EditMode.HIGHLIGHTER -> ImageVector.vectorResource(R.drawable.ic_ink_highlighter)
                 EditMode.TEXT -> Icons.Filled.TextFields
                 EditMode.BRIGHTNESS -> Icons.Filled.BrightnessMedium
                 EditMode.CONTRAST -> Icons.Filled.Contrast
