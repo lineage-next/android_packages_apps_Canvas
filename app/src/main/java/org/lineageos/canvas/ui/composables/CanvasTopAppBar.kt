@@ -160,7 +160,7 @@ fun CanvasTopAppBar(
                                             modifier = Modifier
                                                 .size(SplitButtonDefaults.TrailingIconSize)
                                                 .graphicsLayer { rotationZ = rotation },
-                                            contentDescription = "Localized description",
+                                            contentDescription = null,
                                         )
                                     }
                                 }
