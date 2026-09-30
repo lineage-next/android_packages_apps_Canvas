@@ -141,6 +141,14 @@ private fun CropOverlay(
 
                         val activeHandle = activeHandle ?: return@detectDragGestures
 
+                        if ((change.position.y > imageBounds.bottom && dragAmount.y < 0f)
+                            || (change.position.y < imageBounds.top && dragAmount.y > 0f)
+                            || (change.position.x > imageBounds.right && dragAmount.x < 0f)
+                            || (change.position.x < imageBounds.left && dragAmount.x > 0f)
+                        ) {
+                            return@detectDragGestures
+                        }
+
                         val newRect = updateRectWithDrag(
                             currentCropRect,
                             activeHandle,
